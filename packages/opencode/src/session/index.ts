@@ -1136,8 +1136,6 @@ export namespace Session {
       parts: [
         {
           id: Identifier.ascending("part"),
-          sessionID: input.sessionID,
-          messageID: input.messageID,
           type: "text",
           text: PROMPT_INITIALIZE.replace("${path}", app.path.root),
         },
