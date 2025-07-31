@@ -5,7 +5,7 @@
   "exports": {
     ".": "./dist/index.js"
   },
-  "version": "0.0.4",
+  "version": "0.0.0-202507310417",
   "files": [
     "dist"
   ],

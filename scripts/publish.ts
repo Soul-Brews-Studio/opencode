@@ -1,9 +1,19 @@
 #!/usr/bin/env bun
 
-const version = process.env["OPENCODE_VERSION"]
+import { $ } from "bun"
+
+const snapshot = process.env["OPENCODE_SNAPSHOT"] === "true"
+const version = snapshot
+  ? `0.0.0-${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "")}`
+  : process.env["OPENCODE_VERSION"]
 if (!version) {
   throw new Error("OPENCODE_VERSION is required")
 }
+process.env["OPENCODE_VERSION"] = version
 
 await import(`../packages/sdk/stainless/generate.ts`)
 await import(`../packages/sdk/js/script/publish.ts`)
+
+await $`git commit -am "Release v${version}"`
+await $`git tag v${version}`
+await $`git push HEAD --tags`
