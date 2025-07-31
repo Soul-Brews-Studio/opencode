@@ -1037,7 +1037,7 @@ export namespace Session {
                 }
                 break
 
-              case "text":
+              case "text-delta":
                 if (currentText) {
                   currentText.text += value.text
                   if (currentText.text) await updatePart(currentText)
