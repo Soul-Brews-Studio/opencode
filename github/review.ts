@@ -21,9 +21,10 @@ try {
     case "pull_request_synchronize":
       await review()
       break
-    case "pull_request_review_comment_edited":
-      await commitSuggestion()
-      break
+    // TODO
+    //    case "pull_request_review_comment_edited":
+    //      await commitSuggestion()
+    //      break
     default:
       throw new Error(`Unsupported event type: ${Context.eventName()}`)
   }
@@ -301,9 +302,7 @@ ${GitHub.commentSectionBuild("diff", ["```diff", ...diffLines, "```"])}
 
 ---
 
-${GitHub.commentSectionBuild("commit", ["- [ ] 👈 Check here to commit suggestion"])}
-
-${GitHub.commentDataBuild("finding", finding)}
+<sub>**Tip:** Reply "/oc fix" to apply the suggested fix.</sub>
 `,
       },
     }
