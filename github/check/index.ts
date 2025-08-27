@@ -6,7 +6,7 @@ import { Opencode } from "../src/opencode"
 import { Context } from "../src/context"
 
 try {
-  Context.assertEventName("pull_request_opened", "pull_request_synchronize")
+  Context.assertEventName("pull_request_opened", "pull_request_synchronize", "pull_request_reopened")
   await check()
   process.exit(0)
 } catch (e: any) {
@@ -43,7 +43,14 @@ Please check:
 ${process.env.PROMPT}
 </check>
 
-If the check failed, write the reason to ${filename}. Keep the reason short and concise, only one sentence.
+If the check failed, write the reason to ${filename} in this format:
+\`\`\`
+{
+  "reason": "string"
+}
+\`\`\`
+
+Keep the reason short and concise, only one sentence.
 
 If the check passed, do not create any file.
       `)
