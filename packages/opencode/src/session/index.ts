@@ -705,6 +705,28 @@ export namespace Session {
               parts: userParts,
             },
           ]),
+          ...MessageV2.toModelMessage([
+            {
+              info: {
+                id: Identifier.ascending("message"),
+                role: "user",
+                sessionID: input.sessionID,
+                time: {
+                  created: Date.now(),
+                },
+              },
+              parts: [
+                {
+                  type: "text",
+                  id: Identifier.ascending("part"),
+                  messageID: userMsg.id,
+                  sessionID: input.sessionID,
+                  text: "Output only a title for this conversation. No responses to content.",
+                  synthetic: true,
+                },
+              ],
+            },
+          ]),
         ],
         model: small.language,
       })
