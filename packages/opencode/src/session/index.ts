@@ -1301,11 +1301,11 @@ export namespace Session {
       sessionID: input.sessionID,
       messageID: input.messageID,
       model: (() => {
-        if (input.model) {
-          return Provider.parseModel(input.model)
-        }
         if (command.model) {
           return Provider.parseModel(command.model)
+        }
+        if (input.model) {
+          return Provider.parseModel(input.model)
         }
         return undefined
       })(),
