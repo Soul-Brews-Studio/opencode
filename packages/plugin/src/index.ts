@@ -10,19 +10,11 @@ import type {
   Auth,
   Config,
 } from "@opencode-ai/sdk"
+
 import type { BunShell } from "./shell"
-export { z } from "zod/v4"
-import { z } from "zod/v4"
+import { type ToolDefinition } from "./tool"
 
-export function tool<Args extends z.ZodRawShape>(input: {
-  description: string
-  args: Args
-  execute: (args: z.infer<z.ZodObject<Args>>) => Promise<string>
-}) {
-  return input
-}
-
-export type ToolDefinition = ReturnType<typeof tool>
+export * from "./tool"
 
 export type PluginInput = {
   client: ReturnType<typeof createOpencodeClient>
@@ -113,17 +105,6 @@ export interface Hooks {
       title: string
       output: string
       metadata: any
-    },
-  ) => Promise<void>
-  /**
-   * Allow plugins to register additional tools with the server.
-   * Use registerHTTP to add a tool that calls back to your plugin/service.
-   * Use register to add a native/local tool with direct function execution.
-   */
-  "tool.register"?: (
-    input: {},
-    output: {
-      register: (tool: any) => void | Promise<void> // Tool.Info type from opencode
     },
   ) => Promise<void>
 }

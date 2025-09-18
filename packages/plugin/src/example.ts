@@ -1,21 +1,20 @@
-import { Plugin, tool, z } from "./index"
+import { Plugin } from "./index"
+import { tool } from "./tool"
 
-const foo = tool("mytool", {
-  description: "This is a tool",
-  parameters: z.object({
-    foo: z.string(),
-  }),
-  async execute(params) {
-    return {
-      output,
-    }
-  },
-})
-
-export const ExamplePlugin: Plugin = async ({}) => {
+export const ExamplePlugin: Plugin = async (ctx) => {
   return {
     permission: {},
-    tool: {},
+    tool: {
+      mytool: tool((zod) => ({
+        description: "This is a custom tool tool",
+        args: {
+          foo: zod.string(),
+        },
+        async execute(args, ctx) {
+          return `Hello ${args.foo}!`
+        },
+      })),
+    },
     async "chat.params"(_input, output) {
       output.topP = 1
     },
