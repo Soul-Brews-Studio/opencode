@@ -203,6 +203,7 @@ function ToolPart(props: { part: ToolPart; message: AssistantMessage }) {
             paddingTop: 1,
             paddingBottom: 1,
             paddingLeft: 2,
+            gap: 1,
             backgroundColor: Theme.backgroundPanel,
             customBorderChars: SplitBorder.customBorderChars,
             borderColor: Theme.background,
@@ -220,7 +221,7 @@ function ToolPart(props: { part: ToolPart; message: AssistantMessage }) {
           output={props.part.state.status === "completed" ? props.part.state.output : undefined}
         />
         {props.part.state.status === "error" && (
-          <box paddingLeft={2} marginTop={1}>
+          <box paddingLeft={2}>
             <text fg={Theme.error}>{props.part.state.error.replace("Error: ", "")}</text>
           </box>
         )}
@@ -273,19 +274,19 @@ ToolRegistry.register<typeof BashTool>({
   container: "block",
   ready(props) {
     return (
-      <box>
+      <>
         <ToolTitle icon="#" fallback="Writing command..." when={props.input.command}>
           {props.input.description}
         </ToolTitle>
         <Show when={props.input.command}>
-          <box paddingTop={1}>
-            <text fg={Theme.text}>$ {props.input.command}</text>
-            <box>
-              <text fg={Theme.text}>{props.output?.trim()}</text>
-            </box>
+          <text fg={Theme.text}>$ {props.input.command}</text>
+        </Show>
+        <Show when={props.output?.trim()}>
+          <box>
+            <text fg={Theme.text}>{props.output?.trim()}</text>
           </box>
         </Show>
-      </box>
+      </>
     )
   },
 })
@@ -341,7 +342,7 @@ ToolRegistry.register<typeof WriteTool>({
     })
 
     return (
-      <box gap={1}>
+      <>
         <ToolTitle icon="←" fallback="Preparing write..." when={props.input.filePath}>
           Wrote {props.input.filePath}
         </ToolTitle>
@@ -353,7 +354,7 @@ ToolRegistry.register<typeof WriteTool>({
             <text>{code()}</text>
           </box>
         </box>
-      </box>
+      </>
     )
   },
 })
@@ -414,7 +415,7 @@ ToolRegistry.register<typeof TaskTool>({
           Task {props.input.description}
         </ToolTitle>
         <Show when={props.metadata.summary?.length}>
-          <box marginTop={1}>
+          <box>
             <For each={props.metadata.summary ?? []}>
               {(task) => (
                 <text style={{ fg: Theme.textMuted }}>
@@ -460,7 +461,7 @@ ToolRegistry.register<typeof EditTool>({
       return styled
     })
     return (
-      <box gap={1}>
+      <>
         <ToolTitle icon="←" fallback="Preparing edit..." when={props.input.filePath}>
           Edit {normalizePath(props.input.filePath!)}
         </ToolTitle>
@@ -469,7 +470,7 @@ ToolRegistry.register<typeof EditTool>({
             <text>{code()}</text>
           </box>
         </Show>
-      </box>
+      </>
     )
   },
 })
