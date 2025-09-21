@@ -5,9 +5,10 @@ import { $ } from "bun"
 
 import pkg from "../package.json"
 
-const dry = process.env["OPENCODE_DRY"] === "true"
-const version = process.env["OPENCODE_VERSION"]!
 const snapshot = process.env["OPENCODE_SNAPSHOT"] === "true"
+let version = process.env["OPENCODE_VERSION"]
+if (!version && snapshot) version = `0.0.0-${new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "")}`
+if (!version) throw new Error("OPENCODE_VERSION is required")
 const npmTag = snapshot ? "snapshot" : "latest"
 
 console.log(`publishing ${version}`)
@@ -41,12 +42,10 @@ await Bun.file(`./dist/${pkg.name}/package.json`).write(
     2,
   ),
 )
-if (!dry) {
-  for (const [name] of Object.entries(binaries)) {
-    await $`cd dist/${name} && chmod 777 -R . && bun publish --access public --tag ${npmTag}`
-  }
-  await $`cd ./dist/${pkg.name} && bun publish --access public --tag ${npmTag}`
+for (const [name] of Object.entries(binaries)) {
+  await $`cd dist/${name} && chmod 777 -R . && bun publish --access public --tag ${npmTag}`
 }
+await $`cd ./dist/${pkg.name} && bun publish --access public --tag ${npmTag}`
 
 if (!snapshot) {
   for (const key of Object.keys(binaries)) {
@@ -142,7 +141,7 @@ if (!snapshot) {
     await $`cd ./dist/aur-${pkg} && makepkg --printsrcinfo > .SRCINFO`
     await $`cd ./dist/aur-${pkg} && git add PKGBUILD .SRCINFO`
     await $`cd ./dist/aur-${pkg} && git commit -m "Update to v${version}"`
-    if (!dry) await $`cd ./dist/aur-${pkg} && git push`
+    await $`cd ./dist/aur-${pkg} && git push`
   }
 
   // Homebrew formula
@@ -201,5 +200,5 @@ if (!snapshot) {
   await Bun.file("./dist/homebrew-tap/opencode.rb").write(homebrewFormula)
   await $`cd ./dist/homebrew-tap && git add opencode.rb`
   await $`cd ./dist/homebrew-tap && git commit -m "Update to v${version}"`
-  if (!dry) await $`cd ./dist/homebrew-tap && git push`
+  await $`cd ./dist/homebrew-tap && git push`
 }
