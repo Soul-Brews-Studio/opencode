@@ -1,5 +1,5 @@
 import { cmd } from "../cmd"
-import { render, useKeyboard, useKeyHandler, useRenderer, useTerminalDimensions } from "@opentui/solid"
+import { render, useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid"
 import { TextAttributes } from "@opentui/core"
 import { RouteProvider, useRoute } from "./context/route"
 import { Home } from "./home"
@@ -17,9 +17,50 @@ import { Session } from "./session"
 import { Instance } from "../../../project/instance"
 import { EventLoop } from "../../../util/eventloop"
 
-export const OpentuiCommand = cmd({
-  command: "opentui",
-  describe: "print hello",
+export const TuiCommand = cmd({
+  command: "$0 [project]",
+  describe: "start opencode tui",
+  builder: (yargs) =>
+    yargs
+      .positional("project", {
+        type: "string",
+        describe: "path to start opencode in",
+      })
+      .option("model", {
+        type: "string",
+        alias: ["m"],
+        describe: "model to use in the format of provider/model",
+      })
+      .option("continue", {
+        alias: ["c"],
+        describe: "continue the last session",
+        type: "boolean",
+      })
+      .option("session", {
+        alias: ["s"],
+        describe: "session id to continue",
+        type: "string",
+      })
+      .option("prompt", {
+        alias: ["p"],
+        type: "string",
+        describe: "prompt to use",
+      })
+      .option("agent", {
+        type: "string",
+        describe: "agent to use",
+      })
+      .option("port", {
+        type: "number",
+        describe: "port to listen on",
+        default: 0,
+      })
+      .option("hostname", {
+        alias: ["h"],
+        type: "string",
+        describe: "hostname to listen on",
+        default: "127.0.0.1",
+      }),
   handler: async () => {
     await render(
       () => {

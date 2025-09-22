@@ -12,12 +12,11 @@ import { Installation } from "./installation"
 import { NamedError } from "./util/error"
 import { FormatError } from "./cli/error"
 import { ServeCommand } from "./cli/cmd/serve"
-import { TuiCommand } from "./cli/cmd/tui"
+import { TuiCommand } from "./cli/cmd/tui/tui"
 import { DebugCommand } from "./cli/cmd/debug"
 import { StatsCommand } from "./cli/cmd/stats"
 import { McpCommand } from "./cli/cmd/mcp"
 import { GithubCommand } from "./cli/cmd/github"
-import { OpentuiCommand } from "./cli/cmd/opentui/opentui"
 import { ExportCommand } from "./cli/cmd/export"
 
 const cancel = new AbortController()
@@ -72,7 +71,6 @@ const cli = yargs(hideBin(process.argv))
   .usage("\n" + UI.logo())
   .command(McpCommand)
   .command(TuiCommand)
-  .command(OpentuiCommand)
   .command(RunCommand)
   .command(GenerateCommand)
   .command(DebugCommand)
