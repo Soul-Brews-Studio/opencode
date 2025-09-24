@@ -30,7 +30,9 @@ export function init() {
       setStore("leader", true)
       focus = renderer.currentFocusedRenderable
       focus?.blur()
+      if (timeout) clearTimeout(timeout)
       timeout = setTimeout(() => {
+        if (!store.leader) return
         leader(false)
       }, 2000)
       return
@@ -41,7 +43,6 @@ export function init() {
         focus.focus()
       }
       setStore("leader", false)
-      clearTimeout(timeout)
     }
   }
 
