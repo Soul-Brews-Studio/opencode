@@ -4,23 +4,40 @@
 }
 
 [data-page="zen"] {
-  --color-background: hsl(24, 100%, 99%);
-  --color-text: hsl(224, 10%, 10%);
-  --color-text-secondary: hsl(224, 7%, 46%);
-  --color-text-dimmed: hsl(224, 6%, 63%);
-  --color-text-inverted: hsl(0, 0%, 100%);
+  --color-background: hsl(0, 20%, 99%);
+  --color-background-weak: hsl(0, 8%, 97%);
 
-  --color-border: hsl(44, 13%, 90%);
+  --color-text: hsl(0, 1%, 39%);
+  --color-text-weak: hsl(0, 1%, 74%);
+  --color-text-weaker: hsl(30, 2%, 81%);
+  --color-text-strong: hsl(0, 5%, 12%);
+  --color-text-inverted: hsl(0, 20%, 99%);
+
+  --color-border: hsl(30, 2%, 81%);
+  --color-border-weak: hsl(0, 1%, 85%);
+
+  --color-icon: hsl(0, 1%, 55%);
+
+  --color-selection: hsl(61, 67%, 76%);
 }
 
 [data-page="zen"] {
   @media (prefers-color-scheme: dark) {
-    --color-text: hsl(0, 0%, 100%);
-    --color-text-secondary: hsl(224, 6%, 66%);
-    --color-text-dimmed: hsl(224, 7%, 46%);
-    --color-text-inverted: hsl(224, 10%, 10%);
+    --color-background: hsl(0, 9%, 7%);
+    --color-background-weak: hsl(0, 6%, 10%);
 
-    --color-border: hsl(224, 6%, 36%);
+    --color-text: hsl(0, 4%, 71%);
+    --color-text-weak: hsl(0, 2%, 49%);
+    --color-text-weaker: hsl(0, 3%, 28%);
+    --color-text-strong: hsl(0, 15%, 94%);
+    --color-text-inverted: hsl(0, 9%, 7%);
+
+    --color-border: hsl(0, 3%, 28%);
+    --color-border-weak: hsl(0, 4%, 23%);
+
+    --color-icon: hsl(10, 3%, 43%);
+
+    --color-selection: hsl(60, 44%, 17%);
   }
 }
 

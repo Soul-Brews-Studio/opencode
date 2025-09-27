@@ -4,7 +4,6 @@ import { onCleanup, onMount } from "solid-js"
 import logoLight from "../../asset/logo-ornate-light.svg"
 import logoDark from "../../asset/logo-ornate-dark.svg"
 import zenLogoDark from "../../asset/zen-ornate-dark.svg"
-import IMG_SPLASH from "../../asset/lander/screenshot-splash.png"
 import compareVideo from "../../asset/lander/opencode-comparison-min.mp4"
 import compareVideoPoster from "../../asset/lander/opencode-comparison-poster.png"
 import avatarDax from "../../asset/lander/avatar-dax.png"
@@ -12,7 +11,6 @@ import avatarJay from "../../asset/lander/avatar-Jay.png"
 import avatarFrank from "../../asset/lander/avatar-Frank.png"
 import avatarAdam from "../../asset/lander/avatar-Adam.png"
 import avatarDavid from "../../asset/lander/avatar-David.png"
-import { IconCopy, IconCheck } from "../../component/icon"
 import { createAsync, query } from "@solidjs/router"
 import { getActor } from "~/context/auth"
 import { withActor } from "~/context/auth.withActor"
@@ -83,7 +81,7 @@ export default function Home() {
             <div data-slot="hero-copy">
               <img data-slot="zen logo dark" src={zenLogoDark}
                    alt="Zen logo dark"/>
-              <strong>Reliable coding optimized models</strong>
+              <strong>Reliable optimized models purely for coding</strong>
               <p>Zen gives you access to a curated set of AI models that
                 OpenCode has tested and benchmarked specifically for coding
                 agents. No need to worry about inconsistent performance and
