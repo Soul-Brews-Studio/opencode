@@ -102,6 +102,19 @@ export function Session() {
     },
   ])
 
+  const revert = createMemo(() => {
+    const s = session()
+    if (!s) return
+    const messageID = s.revert?.messageID
+    if (!messageID) return
+    const reverted = messages().filter((x) => x.id >= messageID && x.role === "user")
+
+    return {
+      messageID,
+      reverted,
+    }
+  })
+
   return (
     <box paddingTop={1} paddingBottom={1} paddingLeft={2} paddingRight={2} flexGrow={1}>
       <Show when={session()}>
@@ -118,6 +131,25 @@ export function Session() {
           <For each={messages()}>
             {(message, index) => (
               <Switch>
+                <Match when={message.id === revert()?.messageID}>
+                  <box
+                    marginTop={1}
+                    flexShrink={0}
+                    border={["left"]}
+                    customBorderChars={SplitBorder.customBorderChars}
+                    borderColor={Theme.backgroundPanel}
+                  >
+                    <box paddingTop={1} paddingBottom={1} paddingLeft={2} backgroundColor={Theme.backgroundPanel}>
+                      <text fg={Theme.textMuted}>{revert()!.reverted.length} message reverted</text>
+                      <text fg={Theme.textMuted}>
+                        <span style={{ fg: Theme.text }}>{keybind.print("messages_redo")}</span> or /redo to restore
+                      </text>
+                    </box>
+                  </box>
+                </Match>
+                <Match when={revert()?.messageID && message.id >= revert()!.messageID}>
+                  <></>
+                </Match>
                 <Match when={message.role === "user"}>
                   <UserMessage message={message as UserMessage} parts={sync.data.part[message.id] ?? []} />
                 </Match>
