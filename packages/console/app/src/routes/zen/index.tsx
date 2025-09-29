@@ -455,10 +455,10 @@ export default function Home() {
                     >
                       <path d="M12.5 11.5H19V12.5H12.5V19H11.5V12.5H5V11.5H11.5V5H12.5V11.5Z" fill="#6D717D" />
                     </svg>
-                    What makes Zen more accurate for coding?
+                    What makes Zen more accurate?
                   </div>
                   <div data-slot="faq-answer" hidden>
-                    Zen only provides models that have been specifically tested and benchmarked for coding. You wouldn’t
+                    Zen only provides models that have been specifically tested and benchmarked for coding agents. You wouldn’t
                     use a butter knife to cut steak, don’t use poor models for coding.
                   </div>
                 </div>
@@ -572,7 +572,7 @@ export default function Home() {
                   </div>
                   <div data-slot="faq-answer" hidden>
                     We take your data and privacy seriously. All Zen models are hosted in the US. Providers follow a
-                    zero-retention policy and do not use your data for model training, with the
+                    zero-retention policy and do not use your data for model training, with the{" "}
                     <a href="../docs/zen/#privacy">following exceptions</a>.
                   </div>
                 </div>
@@ -594,7 +594,7 @@ export default function Home() {
                     Can I set spend limits?
                   </div>
                   <div data-slot="faq-answer" hidden>
-                    Yes, set monthly spending limits in your account.
+                    Yes, you can set monthly spending limits in your account.
                   </div>
                 </div>
               </li>
@@ -615,7 +615,7 @@ export default function Home() {
                     Can I cancel?
                   </div>
                   <div data-slot="faq-answer" hidden>
-                    Yes, you can disable billing at any time and enjoy your remaining balance.
+                    Yes, you can disable billing at any time and use your remaining balance.
                   </div>
                 </div>
               </li>

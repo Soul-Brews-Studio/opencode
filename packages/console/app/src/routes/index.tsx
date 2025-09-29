@@ -684,7 +684,7 @@ export default function Home() {
                   </div>
                   <div data-slot="faq-answer" hidden>
                     Your data and information is only stored when you create sharable links in OpenCode. Learn more
-                    about <a href="/docs/share/#privacy">privacy</a>.
+                    about <a href="/docs/share/#privacy">share pages</a>.
                   </div>
                 </div>
               </li>
@@ -708,8 +708,8 @@ export default function Home() {
                     Yes, OpenCode is fully open source. The source code is public on{" "}
                     <a href="https://github.com/sst/opencode" target="_blank">
                       GitHub
-                    </a>
-                    . OpenCode is licensed under the{" "}
+                    </a>{" "}
+                    under the{" "}
                     <a href="https://github.com/sst/opencode?tab=MIT-1-ov-file#readme" target="_blank">
                       MIT License
                     </a>
