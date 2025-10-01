@@ -826,6 +826,7 @@
       li {
         list-style: none;
         margin-bottom: 24px;
+        line-height: 200%;
       }
     }
 
