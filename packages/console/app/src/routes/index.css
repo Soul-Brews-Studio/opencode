@@ -168,7 +168,7 @@
     border: 1px solid var(--color-border-weak);
     border-top: none;
 
-    @media (max-width: 80rem) {
+    @media (max-width: 65rem) {
       border: none;
     }
   }
@@ -462,7 +462,6 @@
       color: var(--color-text-strong);
       font-weight: 500;
       margin-bottom: 16px;
-      display: block;
 
       @media (max-width: 60rem) {
         font-size: 22px;
@@ -992,20 +991,34 @@
     display: flex;
     flex-direction: row;
 
+    @media (max-width: 65rem) {
+      border-bottom: 1px solid var(--color-border-weak);
+    }
+
+
     [data-slot="cell"] {
       flex: 1;
       text-align: center;
-      padding: 2rem 0.5rem;
+
 
       a {
         text-decoration: none;
+        padding: 2rem 0;
+        width: 100%;
+        display: block;
 
         span {
           color: var(--color-text-weak);
+
+          @media (max-width: 40rem) {
+            display: none;
+          }
+
         }
       }
 
       a:hover {
+        background: var(--color-background-weak);
         text-decoration: underline;
         text-underline-offset: var(--space-2);
         text-decoration-thickness: 1px;
@@ -1017,7 +1030,7 @@
     }
 
     /* Mobile: third column on its own row */
-    @media (max-width: 40rem) {
+    @media (max-width: 25rem) {
       flex-wrap: wrap;
 
       [data-slot="cell"] {
