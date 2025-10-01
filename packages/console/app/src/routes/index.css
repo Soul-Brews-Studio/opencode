@@ -840,6 +840,7 @@
       background: none;
       border: none;
       padding: 0;
+      align-items: center;
 
       [data-slot="faq-icon-plus"] {
         flex-shrink: 0;
