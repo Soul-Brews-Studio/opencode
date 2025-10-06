@@ -33,6 +33,7 @@ import { useDialog } from "../../ui/dialog"
 import { DialogMessage } from "./dialog-message"
 import type { PromptInfo } from "../../component/prompt/history"
 import { iife } from "@/util/iife"
+import { DialogConfirm } from "@tui/ui/dialog-confirm"
 
 export function Session() {
   const route = useRouteData("session")
@@ -262,11 +263,24 @@ export function Session() {
                   {(function () {
                     const command = useCommandDialog()
                     const [hover, setHover] = createSignal(false)
+                    const dialog = useDialog()
+
+                    const handleUnrevert = async () => {
+                      const confirmed = await DialogConfirm.show(
+                        dialog,
+                        "Confirm Redo",
+                        "Are you sure you want to restore the reverted messages?",
+                      )
+                      if (confirmed) {
+                        command.trigger("session.redo")
+                      }
+                    }
+
                     return (
                       <box
                         onMouseOver={() => setHover(true)}
                         onMouseOut={() => setHover(false)}
-                        onMouseUp={() => command.trigger("session.redo")}
+                        onMouseUp={handleUnrevert}
                         marginTop={1}
                         flexShrink={0}
                         border={["left"]}

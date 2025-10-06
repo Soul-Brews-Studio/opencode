@@ -15,7 +15,7 @@ export function DialogMessage(props: { messageID: string; sessionID: string }) {
         {
           title: "Revert",
           value: "session.revert",
-          description: "rollback everything after this message",
+          description: "undo messages and file changes",
           onSelect: (dialog) => {
             sdk.session.revert({
               path: {
