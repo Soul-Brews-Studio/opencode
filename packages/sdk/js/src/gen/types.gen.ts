@@ -1526,12 +1526,6 @@ export type SessionForkData = {
     messageID?: string
   }
   path: {
-<<<<<<< HEAD
-    /**
-     * Session ID
-     */
-=======
->>>>>>> dev
     id: string
   }
   query?: {
