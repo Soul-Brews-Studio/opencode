@@ -54,7 +54,7 @@ function HelpRow(props: ParentProps<{ keybind: keyof KeybindsConfig }>) {
   const keybind = useKeybind()
   return (
     <box flexDirection="row" justifyContent="space-between" width="100%">
-      <text>• {props.children}</text>
+      <text>{props.children}</text>
       <text fg={Theme.primary}>{keybind.print(props.keybind)}</text>
     </box>
   )
