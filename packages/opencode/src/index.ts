@@ -12,13 +12,13 @@ import { Installation } from "./installation"
 import { NamedError } from "./util/error"
 import { FormatError } from "./cli/error"
 import { ServeCommand } from "./cli/cmd/serve"
-import { TuiCommand } from "./cli/cmd/tui/tui"
 import { AttachCommand } from "./cli/cmd/tui/attach"
 import { DebugCommand } from "./cli/cmd/debug"
 import { StatsCommand } from "./cli/cmd/stats"
 import { McpCommand } from "./cli/cmd/mcp"
 import { GithubCommand } from "./cli/cmd/github"
 import { ExportCommand } from "./cli/cmd/export"
+import { TuiCommand } from "./cli/cmd/tui/tui"
 
 const cancel = new AbortController()
 

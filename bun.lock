@@ -154,8 +154,12 @@
         "@openauthjs/openauth": "catalog:",
         "@opencode-ai/plugin": "workspace:*",
         "@opencode-ai/sdk": "workspace:*",
+<<<<<<< HEAD
         "@opentui/core": "0.1.26",
         "@opentui/solid": "0.1.26",
+=======
+        "@parcel/watcher": "2.5.1",
+>>>>>>> dev
         "@standard-schema/spec": "1.0.0",
         "@zip.js/zip.js": "2.7.62",
         "ai": "catalog:",
@@ -190,6 +194,7 @@
         "@ai-sdk/amazon-bedrock": "2.2.10",
         "@ai-sdk/google-vertex": "3.0.16",
         "@octokit/webhooks-types": "7.6.1",
+        "@parcel/watcher-win32-x64": "2.5.1",
         "@standard-schema/spec": "1.0.0",
         "@tsconfig/bun": "1.0.7",
         "@types/bun": "catalog:",
@@ -248,7 +253,7 @@
         "sharp": "0.32.5",
         "shiki": "3.4.2",
         "solid-js": "catalog:",
-        "toolbeam-docs-theme": "0.4.7",
+        "toolbeam-docs-theme": "0.4.8",
       },
       "devDependencies": {
         "@types/node": "catalog:",
@@ -2958,9 +2963,13 @@
 
     "toidentifier": ["toidentifier@1.0.1", "", {}, "sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA=="],
 
+<<<<<<< HEAD
     "token-types": ["token-types@4.2.1", "", { "dependencies": { "@tokenizer/token": "^0.3.0", "ieee754": "^1.2.1" } }, "sha512-6udB24Q737UD/SDsKAHI9FCRP7Bqc9D/MQUV02ORQg5iskjtLJlZJNdN4kKtcdtwCeWIwIHDGaUsTsCCAa8sFQ=="],
 
     "toolbeam-docs-theme": ["toolbeam-docs-theme@0.4.7", "", { "peerDependencies": { "@astrojs/starlight": "^0.34.3", "astro": "^5.7.13" } }, "sha512-oVA/V4M4s4vtLljfnZrOSuCNomek5h9jIYkr92l4QgAQvB3ht+D7xAJIy27IGVJzYA5scUE1OK84ZZqeajoeWw=="],
+=======
+    "toolbeam-docs-theme": ["toolbeam-docs-theme@0.4.8", "", { "peerDependencies": { "@astrojs/starlight": "^0.34.3", "astro": "^5.7.13" } }, "sha512-b+5ynEFp4Woe5a22hzNQm42lD23t13ZMihVxHbzjA50zdcM9aOSJTIjdJ0PDSd4/50HbBXcpHiQsz6rM4N88ww=="],
+>>>>>>> dev
 
     "tr46": ["tr46@0.0.3", "", {}, "sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw=="],
 

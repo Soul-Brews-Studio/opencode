@@ -1,7 +1,11 @@
 #!/usr/bin/env bun
+<<<<<<< HEAD
 
 import solidPlugin from "../../../node_modules/@opentui/solid/scripts/solid-plugin"
 
+=======
+import path from "path"
+>>>>>>> dev
 const dir = new URL("..", import.meta.url).pathname
 process.chdir(dir)
 import { $ } from "bun"
@@ -41,6 +45,11 @@ for (const [os, arch] of targets) {
   await $`npm pack npm pack ${opentui}`.cwd(path.join(dir, "../../node_modules")).quiet()
   await $`tar -xf ../../node_modules/${opentui.replace("@opentui/", "opentui-")}-*.tgz -C ../../node_modules/${opentui} --strip-components=1`
 
+  const watcher = `@parcel/watcher-${os === "windows" ? "win32" : os}-${arch.replace("-baseline", "")}${os === "linux" ? "-glibc" : ""}`
+  await $`mkdir -p ../../node_modules/${watcher}`
+  await $`npm pack npm pack ${watcher}`.cwd(path.join(dir, "../../node_modules")).quiet()
+  await $`tar -xf ../../node_modules/${watcher.replace("@parcel/", "parcel-")}-*.tgz -C ../../node_modules/${watcher} --strip-components=1`
+
   await Bun.build({
     conditions: ["browser"],
     tsconfig: "./tsconfig.json",
@@ -54,7 +63,6 @@ for (const [os, arch] of targets) {
     entrypoints: ["./src/index.ts", path.resolve(dir, "../../node_modules/@opentui/core/parser.worker.js")],
     define: {
       OPENCODE_VERSION: `'${version}'`,
-      OPENCODE_TUI_PATH: `'../../../dist/${name}/bin/tui'`,
       OTUI_TREE_SITTER_WORKER_PATH: "/$bunfs/root/../../node_modules/@opentui/core/parser.worker.js",
     },
   })
