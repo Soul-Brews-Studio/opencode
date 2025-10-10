@@ -16,7 +16,7 @@ import { useRouteData } from "@tui/context/route"
 import { useSync } from "@tui/context/sync"
 import { SplitBorder } from "@tui/component/border"
 import { syntaxTheme, Theme } from "@tui/context/theme"
-import { BoxRenderable, pathToFiletype, ScrollBoxRenderable } from "@opentui/core"
+import { BoxRenderable, ScrollBoxRenderable } from "@opentui/core"
 import { Prompt, type PromptRef } from "@tui/component/prompt"
 import type { AssistantMessage, Part, ToolPart, UserMessage, TextPart, ReasoningPart } from "@opencode-ai/sdk"
 import { useLocal } from "@tui/context/local"
@@ -802,7 +802,7 @@ ToolRegistry.register<typeof WriteTool>({
             <For each={numbers()}>{(value) => <text style={{ fg: Theme.textMuted }}>{value}</text>}</For>
           </box>
           <box paddingLeft={1} flexGrow={1}>
-            <code filetype={pathToFiletype(props.input.filePath!)} syntaxStyle={syntaxTheme} content={code()} />
+            <code filetype={filetype(props.input.filePath!)} syntaxStyle={syntaxTheme} content={code()} />
           </box>
         </box>
       </>
@@ -967,17 +967,7 @@ ToolRegistry.register<typeof EditTool>({
       return text.trim()
     })
 
-    const filetype = createMemo(() => {
-      if (!props.input.filePath) return "none"
-      const ext = path.extname(props.input.filePath)
-      const language = LANGUAGE_EXTENSIONS[ext]
-      if (["typescriptreact", "javascriptreact", "javascript"].includes(language)) return "typescript"
-      return language
-    })
-
-    createEffect(() => {
-      console.log(filetype())
-    })
+    const ft = createMemo(() => filetype(props.input.filePath))
 
     return (
       <>
@@ -994,16 +984,16 @@ ToolRegistry.register<typeof EditTool>({
           <Match when={diff() && style() === "split"}>
             <box paddingLeft={1} flexDirection="row" gap={2}>
               <box flexGrow={1} flexBasis={0}>
-                <code filetype={filetype()} syntaxStyle={syntaxTheme} content={diff()!.oldContent} />
+                <code filetype={ft()} syntaxStyle={syntaxTheme} content={diff()!.oldContent} />
               </box>
               <box flexGrow={1} flexBasis={0}>
-                <code filetype={filetype()} syntaxStyle={syntaxTheme} content={diff()!.newContent} />
+                <code filetype={ft()} syntaxStyle={syntaxTheme} content={diff()!.newContent} />
               </box>
             </box>
           </Match>
           <Match when={code()}>
             <box paddingLeft={1}>
-              <code filetype={filetype()} syntaxStyle={syntaxTheme} content={code()} />
+              <code filetype={ft()} syntaxStyle={syntaxTheme} content={code()} />
             </box>
           </Match>
         </Switch>
@@ -1064,4 +1054,12 @@ function input(input: Record<string, any>, omit?: string[]): string {
   })
   if (primitives.length === 0) return ""
   return `[${primitives.map(([key, value]) => `${key}=${value}`).join(", ")}]`
+}
+
+function filetype(input?: string) {
+  if (!input) return "none"
+  const ext = path.extname(input)
+  const language = LANGUAGE_EXTENSIONS[ext]
+  if (["typescriptreact", "javascriptreact", "javascript"].includes(language)) return "typescript"
+  return language
 }
