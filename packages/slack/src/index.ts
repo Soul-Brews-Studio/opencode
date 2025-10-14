@@ -100,15 +100,17 @@ app.message(async ({ message, say }) => {
     // Start listening to events for this session
     const eventStream = await client.event.subscribe()
 
-    eventStream.addEventListener("message", (event: any) => {
-      const data = JSON.parse(event.data)
-      if (data.type === "message.part.updated" && data.properties.part.sessionID === createResult.data.id) {
-        const part = data.properties.part
-        if (part.type === "tool") {
-          handleToolUpdate(part, channel, thread)
+    // Listen for events in the background
+    ;(async () => {
+      for await (const event of eventStream.stream) {
+        if (event.type === "message.part.updated" && event.properties.part.sessionID === createResult.data.id) {
+          const part = event.properties.part
+          if (part.type === "tool") {
+            handleToolUpdate(part, channel, thread)
+          }
         }
       }
-    })
+    })()
 
     session = { client, server, sessionId: createResult.data.id, channel, thread, eventStream }
     sessions.set(sessionKey, session)
