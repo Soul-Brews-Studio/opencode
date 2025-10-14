@@ -20,33 +20,31 @@ import { Home } from "@tui/routes/home"
 import { Session } from "@tui/routes/session"
 import { PromptHistoryProvider } from "./component/prompt/history"
 import { DialogAlert } from "./ui/dialog-alert"
+import { ExitProvider } from "./context/exit"
 
 export async function tui(input: { url: string; onExit?: () => Promise<void> }) {
   await render(
     () => {
       return (
-        <RouteProvider>
-          <SDKProvider url={input.url}>
-            <SyncProvider>
-              <LocalProvider>
-                <KeybindProvider>
-                  <DialogProvider>
-                    <CommandProvider>
-                      <PromptHistoryProvider>
-                        <App
-                          onExit={async () => {
-                            await input.onExit?.()
-                            process.exit(0)
-                          }}
-                        />
-                      </PromptHistoryProvider>
-                    </CommandProvider>
-                  </DialogProvider>
-                </KeybindProvider>
-              </LocalProvider>
-            </SyncProvider>
-          </SDKProvider>
-        </RouteProvider>
+        <ExitProvider onExit={input.onExit}>
+          <RouteProvider>
+            <SDKProvider url={input.url}>
+              <SyncProvider>
+                <LocalProvider>
+                  <KeybindProvider>
+                    <DialogProvider>
+                      <CommandProvider>
+                        <PromptHistoryProvider>
+                          <App />
+                        </PromptHistoryProvider>
+                      </CommandProvider>
+                    </DialogProvider>
+                  </KeybindProvider>
+                </LocalProvider>
+              </SyncProvider>
+            </SDKProvider>
+          </RouteProvider>
+        </ExitProvider>
       )
     },
     {
@@ -58,7 +56,7 @@ export async function tui(input: { url: string; onExit?: () => Promise<void> }) 
   )
 }
 
-function App(props: { onExit: () => void }) {
+function App() {
   const route = useRoute()
   const dimensions = useTerminalDimensions()
   const renderer = useRenderer()
@@ -85,10 +83,6 @@ function App(props: { onExit: () => void }) {
     if (evt.meta && evt.name === "d") {
       renderer.console.toggle()
       return
-    }
-    if (keybind.match("app_exit", evt)) {
-      renderer.destroy()
-      props.onExit()
     }
   })
 

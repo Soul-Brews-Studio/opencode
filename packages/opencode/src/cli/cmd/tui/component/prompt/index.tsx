@@ -15,6 +15,7 @@ import { iife } from "@/util/iife"
 import { useCommandDialog } from "../dialog-command"
 import { useRenderer } from "@opentui/solid"
 import { Editor } from "@tui/util/editor"
+import { useExit } from "../../context/exit"
 
 export type PromptProps = {
   sessionID?: string
@@ -197,6 +198,7 @@ export function Prompt(props: PromptProps) {
         })
       }, 50)
   }
+  const exit = useExit()
 
   return (
     <>
@@ -258,6 +260,17 @@ export function Prompt(props: PromptProps) {
               onKeyDown={async (e) => {
                 if (props.disabled) {
                   e.preventDefault()
+                  return
+                }
+                if (keybind.match("input_clear", e) && store.prompt.input !== "") {
+                  setStore("prompt", {
+                    input: "",
+                    parts: [],
+                  })
+                  return
+                }
+                if (keybind.match("app_exit", e)) {
+                  await exit()
                   return
                 }
                 if (e.name === "!" && input.cursorPosition === 0) {
