@@ -2,6 +2,7 @@ import { useSync } from "@tui/context/sync"
 import { createMemo, For, Show, Switch, Match } from "solid-js"
 import { Theme } from "../../context/theme"
 import { Locale } from "@/util/locale"
+import path from "path"
 import type { AssistantMessage } from "@opencode-ai/sdk"
 
 export function Sidebar(props: { sessionID: string }) {
@@ -117,15 +118,29 @@ export function Sidebar(props: { sessionID: string }) {
               <b>Modified Files</b>
             </text>
             <For each={session().summary?.diffs || []}>
-              {(item) => (
-                <box flexDirection="row" gap={1} justifyContent="space-between">
-                  <text fg={Theme.textMuted}>{Locale.truncateMiddle(item.file, 40)}</text>
-                  <box flexDirection="row" gap={1}>
-                    <text fg={Theme.diffAdded}>+{item.additions}</text>
-                    <text fg={Theme.diffRemoved}>-{item.deletions}</text>
+              {(item) => {
+                const file = createMemo(() => {
+                  const splits = item.file.split(path.sep).filter(Boolean)
+                  const last = splits.at(-1)!
+                  const rest = splits.slice(0, -1).join(path.sep)
+                  return Locale.truncateMiddle(rest, 30 - last.length) + "/" + last
+                })
+                return (
+                  <box flexDirection="row" gap={1} justifyContent="space-between">
+                    <text fg={Theme.textMuted} wrapMode="char">
+                      {file()}
+                    </text>
+                    <box flexDirection="row" gap={1} flexShrink={0}>
+                      <Show when={item.additions}>
+                        <text fg={Theme.diffAdded}>+{item.additions}</text>
+                      </Show>
+                      <Show when={item.deletions}>
+                        <text fg={Theme.diffRemoved}>-{item.deletions}</text>
+                      </Show>
+                    </box>
                   </box>
-                </box>
-              )}
+                )
+              }}
             </For>
           </box>
         </Show>

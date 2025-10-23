@@ -49,17 +49,9 @@ import { DialogTimeline } from "./dialog-timeline"
 import { Sidebar } from "./sidebar"
 import { LANGUAGE_EXTENSIONS } from "@/lsp/language"
 
-addDefaultParsers([
-  {
-    filetype: "json",
-    wasm: "https://github.com/tree-sitter/tree-sitter-json/releases/download/v0.24.8/tree-sitter-json.wasm",
-    queries: {
-      highlights: [
-        "https://raw.githubusercontent.com/nvim-treesitter/nvim-treesitter/refs/heads/master/queries/json/highlights.scm",
-      ],
-    },
-  },
-])
+import parsers from "../../../../../../parsers-config.json"
+
+addDefaultParsers(parsers.parsers)
 
 const context = createContext<{
   width: number
