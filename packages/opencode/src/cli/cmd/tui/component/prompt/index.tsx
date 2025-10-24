@@ -323,6 +323,7 @@ export function Prompt(props: PromptProps) {
                     if (item) {
                       setStore("prompt", item)
                       input.cursorPosition = item.input.length
+                      e.preventDefault()
                     }
                     return
                   }
