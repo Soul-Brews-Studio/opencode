@@ -42,7 +42,7 @@ export function Home() {
         <HelpRow keybind="agent_cycle">Switch agent</HelpRow>
       </box>
       <box width="100%" maxWidth={75} zIndex={1000} paddingTop={1}>
-        <Prompt hint={Hint} />
+        <Prompt hint={Hint} showPlaceholder={true} />
       </box>
     </box>
   )

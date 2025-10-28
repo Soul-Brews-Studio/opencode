@@ -4,7 +4,6 @@ import {
   TextareaRenderable,
   MouseEvent,
   KeyEvent,
-  SyntaxStyle,
   PasteEvent,
   t,
   dim,
@@ -33,6 +32,7 @@ export type PromptProps = {
   onSubmit?: () => void
   ref?: (ref: PromptRef) => void
   hint?: JSX.Element
+  showPlaceholder?: boolean
 }
 
 export type PromptRef = {
@@ -382,7 +382,11 @@ export function Prompt(props: PromptProps) {
           </box>
           <box paddingTop={1} paddingBottom={1} backgroundColor={Theme.backgroundElement} flexGrow={1}>
             <textarea
-              placeholder={t`${dim(fg(Theme.primary)("  → meta+↑↓"))} ${dim(fg("#64748b")("history"))} ${dim(fg("#a78bfa")("•"))} ${dim(fg(Theme.primary)("meta+return"))} ${dim(fg("#64748b")("newline"))} ${dim(fg("#a78bfa")("•"))} ${dim(fg(Theme.primary)("return"))} ${dim(fg("#64748b")("submit"))}`}
+              placeholder={
+                props.showPlaceholder
+                  ? t`${dim(fg(Theme.primary)("  → meta+↑↓"))} ${dim(fg("#64748b")("history"))} ${dim(fg("#a78bfa")("•"))} ${dim(fg(Theme.primary)("meta+return"))} ${dim(fg("#64748b")("newline"))} ${dim(fg("#a78bfa")("•"))} ${dim(fg(Theme.primary)("return"))} ${dim(fg("#64748b")("submit"))}`
+                  : undefined
+              }
               textColor={Theme.text}
               focusedTextColor={Theme.text}
               minHeight={1}
