@@ -6,6 +6,7 @@ import type { KeybindsConfig } from "@opencode-ai/sdk"
 import { Logo } from "../component/logo"
 import { Locale } from "@/util/locale"
 import { useSync } from "../context/sync"
+import { Toast } from "../ui/toast"
 
 export function Home() {
   const sync = useSync()
@@ -44,6 +45,7 @@ export function Home() {
       <box width="100%" maxWidth={75} zIndex={1000} paddingTop={1}>
         <Prompt hint={Hint} showPlaceholder={true} />
       </box>
+      <Toast />
     </box>
   )
 }
