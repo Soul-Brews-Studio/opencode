@@ -70,7 +70,12 @@ export function Autocomplete(props: {
     const extmarkStart = store.index
     const extmarkEnd = extmarkStart + virtualText.length
 
-    const styleId = part.type === "file" ? props.fileStyleId : part.type === "agent" ? props.agentStyleId : undefined
+    const styleId =
+      part.type === "file"
+        ? props.fileStyleId
+        : part.type === "agent"
+          ? props.agentStyleId
+          : undefined
 
     const extmarkId = input.extmarks.create({
       start: extmarkStart,
@@ -169,7 +174,9 @@ export function Autocomplete(props: {
       )
   })
 
-  const session = createMemo(() => (props.sessionID ? sync.session.get(props.sessionID) : undefined))
+  const session = createMemo(() =>
+    props.sessionID ? sync.session.get(props.sessionID) : undefined,
+  )
   const commands = createMemo((): AutocompleteOption[] => {
     const results: AutocompleteOption[] = []
     const s = session()
@@ -248,9 +255,9 @@ export function Autocomplete(props: {
   })
 
   const options = createMemo(() => {
-    const mixed: AutocompleteOption[] = (store.visible === "@" ? [...agents(), ...files()] : [...commands()]).filter(
-      (x) => x.disabled !== true,
-    )
+    const mixed: AutocompleteOption[] = (
+      store.visible === "@" ? [...agents(), ...files()] : [...commands()]
+    ).filter((x) => x.disabled !== true)
     if (!filter()) return mixed.slice(0, 10)
     const result = fuzzysort.go(filter()!, mixed, {
       keys: ["display", "description"],
@@ -320,8 +327,13 @@ export function Autocomplete(props: {
         if (!store.visible) {
           if (e.name === "@") {
             const cursorOffset = props.input().visualCursor.offset
-            const charBeforeCursor = cursorOffset === 0 ? undefined : props.value.at(cursorOffset - 1)
-            if (charBeforeCursor === " " || charBeforeCursor === undefined) {
+            const charBeforeCursor =
+              cursorOffset === 0 ? undefined : props.value.at(cursorOffset - 1)
+            if (
+              charBeforeCursor === " " ||
+              charBeforeCursor === "\n" ||
+              charBeforeCursor === undefined
+            ) {
               show("@")
             }
           }
@@ -365,9 +377,14 @@ export function Autocomplete(props: {
               backgroundColor={index() === store.selected ? Theme.primary : undefined}
               flexDirection="row"
             >
-              <text fg={index() === store.selected ? Theme.background : Theme.text}>{option.display}</text>
+              <text fg={index() === store.selected ? Theme.background : Theme.text}>
+                {option.display}
+              </text>
               <Show when={option.description}>
-                <text fg={index() === store.selected ? Theme.background : Theme.textMuted}> {option.description}</text>
+                <text fg={index() === store.selected ? Theme.background : Theme.textMuted}>
+                  {" "}
+                  {option.description}
+                </text>
               </Show>
             </box>
           )}
