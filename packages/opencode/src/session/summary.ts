@@ -123,8 +123,8 @@ export namespace SessionSummary {
             },
           ],
           headers: small.info.headers,
-        })
-        summary = result.text
+        }).catch(() => {})
+        if (result) summary = result.text
       }
       userMsg.summary.body = summary
       log.info("body", { body: summary })
