@@ -274,7 +274,7 @@ function Option(props: {
   return (
     <>
       <Show when={props.current && !props.active}>
-        <text flexShrink={0} fg={theme.primary} marginRight={1}>
+        <text flexShrink={0} fg={theme.primary} marginRight={0.5}>
           ●
         </text>
       </Show>
