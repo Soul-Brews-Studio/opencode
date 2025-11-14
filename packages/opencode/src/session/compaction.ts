@@ -17,6 +17,7 @@ import { ProviderTransform } from "@/provider/transform"
 import { SessionRetry } from "./retry"
 import { Config } from "@/config/config"
 import { Lock } from "../util/lock"
+import { SessionProcessor } from "./processor"
 
 export namespace SessionCompaction {
   const log = Log.create({ service: "session.compaction" })
@@ -36,7 +37,8 @@ export namespace SessionCompaction {
     if (context === 0) return false
     const count = input.tokens.input + input.tokens.cache.read + input.tokens.output
     const output = Math.min(input.model.limit.output, SessionPrompt.OUTPUT_TOKEN_MAX) || SessionPrompt.OUTPUT_TOKEN_MAX
-    const usable = context - output
+    // const usable = context - output
+    const usable = 20_000
     return count > usable
   }
 
@@ -85,6 +87,109 @@ export namespace SessionCompaction {
       }
       log.info("pruned", { count: toPrune.length })
     }
+  }
+
+  export async function process(input: {
+    parentID: string
+    messages: MessageV2.WithParts[]
+    sessionID: string
+    model: {
+      providerID: string
+      modelID: string
+    }
+    abort: AbortSignal
+  }) {
+    const model = await Provider.getModel(input.model.providerID, input.model.modelID)
+    const system = [
+      ...SystemPrompt.summarize(model.providerID),
+      ...(await SystemPrompt.environment()),
+      ...(await SystemPrompt.custom()),
+    ]
+    const msg = (await Session.updateMessage({
+      id: Identifier.ascending("message"),
+      role: "assistant",
+      parentID: input.parentID,
+      sessionID: input.sessionID,
+      mode: "build",
+      path: {
+        cwd: Instance.directory,
+        root: Instance.worktree,
+      },
+      summary: true,
+      cost: 0,
+      tokens: {
+        output: 0,
+        input: 0,
+        reasoning: 0,
+        cache: { read: 0, write: 0 },
+      },
+      modelID: input.model.modelID,
+      providerID: model.providerID,
+      time: {
+        created: Date.now(),
+      },
+    })) as MessageV2.Assistant
+    const stream = streamText({
+      // set to 0, we handle loop
+      maxRetries: 0,
+      model: model.language,
+      providerOptions: ProviderTransform.providerOptions(model.npm, model.providerID, model.info.options),
+      headers: model.info.headers,
+      abortSignal: input.abort,
+      tools: model.info.tool_call ? {} : undefined,
+      messages: [
+        ...system.map(
+          (x): ModelMessage => ({
+            role: "system",
+            content: x,
+          }),
+        ),
+        ...MessageV2.toModelMessage(input.messages),
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Provide a detailed but concise summary of our conversation above. Focus on information that would be helpful for continuing the conversation, including what we did, what we're doing, which files we're working on, and what we're going to do next.",
+            },
+          ],
+        },
+      ],
+    })
+    const processor = SessionProcessor.create({
+      assistantMessage: msg,
+      sessionID: input.sessionID,
+      providerID: input.model.providerID,
+      model: model.info,
+      abort: input.abort,
+    })
+    const result = await processor.process(stream)
+    const userMessage = await Session.updateMessage({
+      id: Identifier.ascending("message"),
+      role: "user",
+      sessionID: input.sessionID,
+      time: {
+        created: Date.now(),
+      },
+      model: {
+        providerID: input.model.providerID,
+        modelID: input.model.modelID,
+      },
+      agent: "build",
+    })
+    await Session.updatePart({
+      type: "text",
+      sessionID: input.sessionID,
+      messageID: userMessage.id,
+      id: Identifier.ascending("part"),
+      text: "Use the above summary generated from your last session to resume from where you left off.",
+      time: {
+        start: Date.now(),
+        end: Date.now(),
+      },
+      synthetic: true,
+    })
+    return result
   }
 
   export async function run(input: { sessionID: string; providerID: string; modelID: string; signal?: AbortSignal }) {
