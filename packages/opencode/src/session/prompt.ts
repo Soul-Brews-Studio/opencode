@@ -320,6 +320,14 @@ export namespace SessionPrompt {
       }
 
       step++
+      if (step === 1)
+        ensureTitle({
+          session: await Session.get(sessionID),
+          modelID: lastUser.model.modelID,
+          providerID: lastUser.model.providerID,
+          message: msgs.find((m) => m.info.role === "user")!,
+          history: msgs,
+        })
 
       const model = await Provider.getModel(lastUser.model.providerID, lastUser.model.modelID)
       const task = tasks.pop()
@@ -643,21 +651,6 @@ export namespace SessionPrompt {
     }
     throw new Error("Impossible")
   })
-
-  async function checkOverflow(input: {
-    sessionID: string
-    msgs: MessageV2.WithParts[]
-    model: ModelsDev.Model
-    abort: AbortSignal
-  }) {
-    const lastAssistant = input.msgs.findLast((msg) => msg.info.role === "assistant" && msg.info.time.completed)
-      ?.info as MessageV2.Assistant
-    if (!lastAssistant) return false
-    return SessionCompaction.isOverflow({
-      tokens: lastAssistant.tokens,
-      model: input.model,
-    })
-  }
 
   async function resolveModel(input: { model: PromptInput["model"]; agent: Agent.Info }) {
     if (input.model) {
