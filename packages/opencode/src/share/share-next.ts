@@ -32,6 +32,14 @@ export namespace ShareNext {
         },
       ])
     })
+    Bus.subscribe(Session.Event.Diff, async (evt) => {
+      await sync(evt.properties.sessionID, [
+        {
+          type: "session_diff",
+          data: evt.properties.diff,
+        },
+      ])
+    })
   }
 
   export async function create(sessionID: string) {
