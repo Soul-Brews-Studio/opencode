@@ -3,11 +3,10 @@
   "version": "1.0.85",
   "type": "module",
   "exports": {
-    ".": "./src/components/index.ts",
     "./*": "./src/components/*.tsx",
     "./hooks": "./src/hooks/index.ts",
     "./context": "./src/context/index.ts",
-    "./context/*": "./src/context/*",
+    "./context/*": "./src/context/*.tsx",
     "./styles": "./src/styles/index.css",
     "./styles/tailwind": "./src/styles/tailwind/index.css",
     "./fonts/*": "./src/assets/fonts/*"

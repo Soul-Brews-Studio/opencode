@@ -1,7 +1,10 @@
 import { createEffect, Show, For, type JSX, splitProps } from "solid-js"
-import { Dialog, DialogProps, Icon, IconButton, Input } from "@opencode-ai/ui"
 import { createStore } from "solid-js/store"
 import { FilteredListProps, useFilteredList } from "@opencode-ai/ui/hooks"
+import { Dialog, DialogProps } from "./dialog"
+import { Icon } from "./icon"
+import { Input } from "./input"
+import { IconButton } from "./icon-button"
 
 interface SelectDialogProps<T>
   extends FilteredListProps<T>,

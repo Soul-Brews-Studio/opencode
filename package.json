@@ -29,9 +29,6 @@
       "@cloudflare/workers-types": "4.20251008.0",
       "@openauthjs/openauth": "0.0.0-20250322224806",
       "@pierre/precision-diffs": "0.4.4",
-      "@solidjs/meta": "0.29.4",
-      "@solidjs/router": "0.15.3",
-      "@solidjs/start": "1.1.0",
       "@tailwindcss/vite": "4.1.11",
       "diff": "8.0.2",
       "ai": "5.0.97",
@@ -43,12 +40,15 @@
       "@typescript/native-preview": "7.0.0-dev.20251014.1",
       "zod": "4.1.8",
       "remeda": "2.26.0",
-      "solid-js": "1.9.9",
       "solid-list": "0.3.0",
       "tailwindcss": "4.1.11",
       "virtua": "0.42.3",
       "vite": "7.1.4",
-      "vite-plugin-solid": "2.11.8"
+      "@solidjs/meta": "0.29.4",
+      "@solidjs/router": "0.15.4",
+      "@solidjs/start": "1.2.0",
+      "solid-js": "1.9.10",
+      "vite-plugin-solid": "2.11.10"
     }
   },
   "devDependencies": {

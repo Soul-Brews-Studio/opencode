@@ -8,7 +8,6 @@ import {
   Tabs,
   Tooltip,
   Fonts,
-  List,
   Dialog,
   Icon,
   IconButton,
@@ -131,11 +130,6 @@ const Demo: Component = () => {
         </Tooltip>
       </section>
       <h3>List</h3>
-      <section style={{ height: "300px" }}>
-        <List data={["Item 1", "Item 2", "Item 3"]} key={(x) => x}>
-          {(x) => <div>{x}</div>}
-        </List>
-      </section>
       <h3>Input</h3>
       <section>
         <Input

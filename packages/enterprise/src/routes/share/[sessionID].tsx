@@ -1,5 +1,9 @@
-import { FileDiff, Message, Part, Session } from "@opencode-ai/sdk"
+import { FileDiff, Message, Part, Session, SessionStatus } from "@opencode-ai/sdk"
+import { SessionTimeline } from "@opencode-ai/ui/session-timeline"
+import { SessionReview } from "@opencode-ai/ui/session-review"
+import { DataProvider } from "@opencode-ai/ui/context"
 import { createAsync, query, RouteDefinition, useParams } from "@solidjs/router"
+import { Show } from "solid-js"
 import { Share } from "~/core/share"
 
 const getData = query(async (sessionID) => {
@@ -8,6 +12,9 @@ const getData = query(async (sessionID) => {
     session: Session[]
     session_diff: {
       [sessionID: string]: FileDiff[]
+    }
+    session_status: {
+      [sessionID: string]: SessionStatus
     }
     message: {
       [sessionID: string]: Message[]
@@ -20,6 +27,11 @@ const getData = query(async (sessionID) => {
     session_diff: {
       [sessionID]: [],
     },
+    session_status: {
+      [sessionID]: {
+        type: "idle",
+      },
+    },
     message: {},
     part: {},
   }
@@ -31,6 +43,9 @@ const getData = query(async (sessionID) => {
         break
       case "session_diff":
         result.session_diff[sessionID] = item.data
+        break
+      case "session_status":
+        result.session_status[sessionID] = item.data
         break
       case "message":
         result.message[item.data.sessionID] = result.message[item.data.sessionID] ?? []
@@ -55,5 +70,26 @@ export default function () {
     if (!params.sessionID) return
     return getData(params.sessionID)
   })
-  return <pre>{JSON.stringify(data(), null, 2)}</pre>
+  return (
+    <Show when={data()}>
+      {(data) => (
+        <DataProvider data={data()}>
+          <div class="relative bg-background-base size-full overflow-x-hidden flex flex-col">
+            <div class="@container select-text flex flex-col flex-1 min-h-0 overflow-y-hidden">
+              <div class="w-full flex-1 min-h-0 flex">
+                <div class="relative shrink-0 px-6 py-3 flex flex-col gap-6 flex-1 min-h-0 w-full max-w-xl mx-auto">
+                  <SessionTimeline sessionID={params.sessionID!} expanded />
+                </div>
+                <Show when={data().session_diff[params.sessionID!]?.length}>
+                  <div class="relative grow px-6 py-3 flex-1 min-h-0 border-l border-border-weak-base">
+                    <SessionReview diffs={data().session_diff[params.sessionID!]} />
+                  </div>
+                </Show>
+              </div>
+            </div>
+          </div>
+        </DataProvider>
+      )}
+    </Show>
+  )
 }

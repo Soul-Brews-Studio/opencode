@@ -1,4 +1,3 @@
-import { Button, FileIcon, Icon, IconButton, Select, SelectDialog, Tooltip } from "@opencode-ai/ui"
 import { useFilteredList } from "@opencode-ai/ui/hooks"
 import { createEffect, on, Component, Show, For, onMount, onCleanup, Switch, Match } from "solid-js"
 import { createStore } from "solid-js/store"
@@ -10,6 +9,13 @@ import { ContentPart, DEFAULT_PROMPT, isPromptEqual, Prompt, useSession } from "
 import { useSDK } from "@/context/sdk"
 import { useNavigate } from "@solidjs/router"
 import { useSync } from "@/context/sync"
+import { FileIcon } from "@opencode-ai/ui/file-icon"
+import { SelectDialog } from "@opencode-ai/ui/select-dialog"
+import { Button } from "@opencode-ai/ui/button"
+import { Icon } from "@opencode-ai/ui/icon"
+import { Tooltip } from "@opencode-ai/ui/tooltip"
+import { IconButton } from "@opencode-ai/ui/icon-button"
+import { Select } from "@opencode-ai/ui/select"
 
 interface PromptInputProps {
   class?: string
@@ -183,8 +189,8 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       const range = selection.getRangeAt(0)
 
       if (atMatch) {
-        let node: Node | null = range.startContainer
-        let offset = range.startOffset
+        // let node: Node | null = range.startContainer
+        // let offset = range.startOffset
         let runningLength = 0
 
         const walker = document.createTreeWalker(editorRef, NodeFilter.SHOW_TEXT, null)

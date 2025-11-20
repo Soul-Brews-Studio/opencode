@@ -3,6 +3,7 @@ import { FileRoutes } from "@solidjs/start/router"
 import { Suspense } from "solid-js"
 import { Fonts } from "@opencode-ai/ui/fonts"
 import { MetaProvider } from "@solidjs/meta"
+import { MarkedProvider } from "@opencode-ai/ui/context/marked"
 import "./app.css"
 
 export default function App() {
@@ -11,10 +12,12 @@ export default function App() {
       root={(props) => (
         <>
           <Suspense>
-            <MetaProvider>
-              <Fonts />
-              {props.children}
-            </MetaProvider>
+            <MarkedProvider>
+              <MetaProvider>
+                <Fonts />
+                {props.children}
+              </MetaProvider>
+            </MarkedProvider>
           </Suspense>
         </>
       )}
