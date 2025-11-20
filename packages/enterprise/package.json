@@ -17,6 +17,7 @@
     "@solidjs/meta": "catalog:",
     "hono": "catalog:",
     "hono-openapi": "catalog:",
+    "luxon": "catalog:",
     "solid-js": "catalog:",
     "vinxi": "^0.5.7",
     "zod": "catalog:"

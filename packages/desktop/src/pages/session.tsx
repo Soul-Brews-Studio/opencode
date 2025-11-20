@@ -336,6 +336,8 @@ export default function Page() {
                     <SessionTimeline
                       sessionID={session.id!}
                       expanded={layout.review.state() === "tab" || !session.diffs().length}
+                      class="pb-20"
+                      containerClass="pb-20"
                     />
                   </Match>
                   <Match when={true}>

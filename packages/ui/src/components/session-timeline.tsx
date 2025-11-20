@@ -18,7 +18,12 @@ import { Card } from "./card"
 import { MessageProgress } from "./message-progress"
 import { Collapsible } from "./collapsible"
 
-export function SessionTimeline(props: { sessionID: string; expanded?: boolean }) {
+export function SessionTimeline(props: {
+  sessionID: string
+  class?: string
+  containerClass?: string
+  expanded?: boolean
+}) {
   const data = useData()
   const [store, setStore] = createStore({
     messageId: undefined as string | undefined,
@@ -49,7 +54,7 @@ export function SessionTimeline(props: { sessionID: string; expanded?: boolean }
   const working = createMemo(() => status()?.type !== "idle")
 
   return (
-    <div data-component="session-timeline">
+    <div data-component="session-timeline" class={props.class}>
       <Show when={userMessages().length > 1}>
         <ul role="list" data-slot="session-timeline-timeline-list" data-expanded={props.expanded}>
           <For each={userMessages()}>
@@ -136,7 +141,11 @@ export function SessionTimeline(props: { sessionID: string; expanded?: boolean }
 
             return (
               <Show when={isActive()}>
-                <div data-message={message.id} data-slot="session-timeline-message-container">
+                <div
+                  data-message={message.id}
+                  data-slot="session-timeline-message-container"
+                  class={props.containerClass}
+                >
                   {/* Title */}
                   <div data-slot="session-timeline-message-header">
                     <div data-slot="session-timeline-message-title">
@@ -154,7 +163,9 @@ export function SessionTimeline(props: { sessionID: string; expanded?: boolean }
                       </Show>
                     </div>
                   </div>
-                  <Message message={message} parts={parts()} />
+                  <div data-slot="session-timeline-message-content">
+                    <Message message={message} parts={parts()} />
+                  </div>
                   {/* Summary */}
                   <Show when={completed()}>
                     <div data-slot="session-timeline-summary-section">

@@ -1,7 +1,6 @@
 [data-component="session-timeline"] {
-  flex: 1;
+  /* flex: 1; */
   min-height: 0;
-  padding-bottom: 80px;
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
@@ -140,7 +139,6 @@
     align-items: flex-start;
     align-self: stretch;
     gap: 32px;
-    padding-bottom: 80px;
   }
 
   [data-slot="session-timeline-message-header"] {
@@ -153,6 +151,10 @@
     background-color: var(--background-stronger);
     z-index: 20;
     height: 32px;
+  }
+
+  [data-slot="session-timeline-message-content"] {
+    margin-top: -24px;
   }
 
   [data-slot="session-timeline-message-title"] {

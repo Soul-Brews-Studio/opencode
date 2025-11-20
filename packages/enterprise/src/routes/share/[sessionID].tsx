@@ -1,10 +1,15 @@
 import { FileDiff, Message, Part, Session, SessionStatus } from "@opencode-ai/sdk"
 import { SessionTimeline } from "@opencode-ai/ui/session-timeline"
 import { SessionReview } from "@opencode-ai/ui/session-review"
-import { DataProvider } from "@opencode-ai/ui/context"
+import { DataProvider, useData } from "@opencode-ai/ui/context"
 import { createAsync, query, RouteDefinition, useParams } from "@solidjs/router"
-import { Show } from "solid-js"
+import { createMemo, Show } from "solid-js"
 import { Share } from "~/core/share"
+import { Logo, Mark } from "@opencode-ai/ui/logo"
+import { IconButton } from "@opencode-ai/ui/icon-button"
+import { iife } from "@opencode-ai/util/iife"
+import { Binary } from "@opencode-ai/util/binary"
+import { DateTime } from "luxon"
 
 const getData = query(async (sessionID) => {
   const data = await Share.data(sessionID)
@@ -70,24 +75,89 @@ export default function () {
     if (!params.sessionID) return
     return getData(params.sessionID)
   })
+
   return (
     <Show when={data()}>
       {(data) => (
         <DataProvider data={data()}>
-          <div class="relative bg-background-stronger size-full overflow-x-hidden flex flex-col">
-            <div class="@container select-text flex flex-col flex-1 min-h-0 overflow-y-hidden">
-              <div class="w-full flex-1 min-h-0 flex">
-                <div class="relative shrink-0 px-6 py-3 flex flex-col gap-6 flex-1 min-h-0 w-full max-w-xl mx-auto">
-                  <SessionTimeline sessionID={params.sessionID!} expanded />
-                </div>
-                <Show when={data().session_diff[params.sessionID!]?.length}>
-                  <div class="relative grow px-6 py-3 flex-1 min-h-0 border-l border-border-weak-base">
-                    <SessionReview diffs={data().session_diff[params.sessionID!]} />
+          {iife(() => {
+            const data = useData()
+            const match = createMemo(() => Binary.search(data.session, params.sessionID!, (s) => s.id))
+            if (!match().found) throw new Error(`Session ${params.sessionID} not found`)
+            const info = createMemo(() => data.session[match().index])
+            const firstUserMessage = createMemo(() =>
+              data.message[params.sessionID!]?.filter((m) => m.role === "user")?.at(0),
+            )
+            const provider = createMemo(() => firstUserMessage()?.model?.providerID)
+            const model = createMemo(() => firstUserMessage()?.model?.modelID)
+
+            return (
+              <div class="relative bg-background-stronger w-screen h-screen overflow-hidden flex flex-col">
+                <header class="h-12 px-6 py-2 flex items-center justify-between self-stretch bg-background-base border-b border-border-weak-base">
+                  <div class="">
+                    <a href="https://opencode.ai">
+                      <Mark />
+                    </a>
                   </div>
-                </Show>
+                  <div class="flex gap-3 items-center">
+                    <IconButton
+                      as={"a"}
+                      href="https://github.com/sst/opencode"
+                      target="_blank"
+                      icon="github"
+                      variant="ghost"
+                    />
+                    <IconButton
+                      as={"a"}
+                      href="https://opencode.ai/discord"
+                      target="_blank"
+                      icon="discord"
+                      variant="ghost"
+                    />
+                  </div>
+                </header>
+                <div class="@container select-text flex flex-col flex-1 min-h-0">
+                  <div class="w-full flex-1 min-h-0 flex">
+                    <div class="relative shrink-0 px-12 pt-14 flex flex-col gap-10 flex-1 min-h-0 w-full max-w-xl mx-auto">
+                      <div class="flex flex-col gap-4">
+                        <div class="h-8 flex gap-2.5 items-center justify-start self-stretch">
+                          <div class="pl-[2.5px] pr-2 flex items-center gap-1.75 bg-surface-strong shadow-xs-border-base">
+                            <Mark class="shrink-0 w-3 my-0.5" />
+                            <div class="text-12-mono text-text-base">v{info().version}</div>
+                          </div>
+                          <div class="flex gap-2 items-center">
+                            <img
+                              src={`https://models.dev/logos/${provider()}.svg`}
+                              class="size-4 shrink-0 dark:invert"
+                            />
+                            <div class="text-12-regular text-text-base">{model()}</div>
+                          </div>
+                          <div class="text-12-regular text-text-weaker">
+                            {DateTime.fromMillis(info().time.created).toFormat("dd MMM yyyy, HH:mm")}
+                          </div>
+                        </div>
+                        <div class="text-left text-16-medium text-text-strong">{info().title}</div>
+                      </div>
+                      <SessionTimeline
+                        sessionID={params.sessionID!}
+                        class="z-10 bg-background-stronger"
+                        containerClass="pb-20"
+                        expanded
+                      />
+                      <div class="absolute bottom-10 inset-x-0 flex items-center justify-center z-0">
+                        <Logo class="w-58.5 opacity-12" />
+                      </div>
+                    </div>
+                    <Show when={data.session_diff[params.sessionID!]?.length}>
+                      <div class="relative grow px-6 pt-14 flex-1 min-h-0 border-l border-border-weak-base">
+                        <SessionReview diffs={data.session_diff[params.sessionID!]} class="pb-20" />
+                      </div>
+                    </Show>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            )
+          })}
         </DataProvider>
       )}
     </Show>
