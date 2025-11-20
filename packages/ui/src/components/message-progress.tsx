@@ -41,7 +41,13 @@ export function MessageProgress(props: { assistantMessages: () => AssistantMessa
     <div data-slot="message-progress-item" />,
     <div data-slot="message-progress-item" />,
     ...eligibleItems(),
-    ...(done() ? [<div data-slot="message-progress-item" />, <div data-slot="message-progress-item" />, <div data-slot="message-progress-item" />] : []),
+    ...(done()
+      ? [
+          <div data-slot="message-progress-item" />,
+          <div data-slot="message-progress-item" />,
+          <div data-slot="message-progress-item" />,
+        ]
+      : []),
   ])
 
   const delay = createMemo(() => (done() ? 220 : 400))

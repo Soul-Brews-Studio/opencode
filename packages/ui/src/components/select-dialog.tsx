@@ -120,7 +120,8 @@ export function SelectDialog<T>(props: SelectDialogProps<T>) {
           fallback={
             <div data-slot="select-dialog-empty-state">
               <div data-slot="select-dialog-message">
-                {props.emptyMessage ?? "No search results"} for <span data-slot="select-dialog-filter">&quot;{filter()}&quot;</span>
+                {props.emptyMessage ?? "No search results"} for{" "}
+                <span data-slot="select-dialog-filter">&quot;{filter()}&quot;</span>
               </div>
             </div>
           }
