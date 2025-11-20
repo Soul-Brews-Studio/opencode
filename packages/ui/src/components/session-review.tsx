@@ -1,10 +1,24 @@
-import { Accordion, Button, Diff, DiffChanges, FileIcon, Icon, StickyAccordionHeader } from "@opencode-ai/ui"
+import { Accordion } from "./accordion"
+import { Button } from "./button"
+import { Diff } from "./diff"
+import { DiffChanges } from "./diff-changes"
+import { FileIcon } from "./file-icon"
+import { Icon } from "./icon"
+import { StickyAccordionHeader } from "./sticky-accordion-header"
 import { getDirectory, getFilename } from "@opencode-ai/util/path"
-import { For, Match, Show, Switch, type JSX } from "solid-js"
+import { For, Match, Show, Switch, type JSX, splitProps } from "solid-js"
 import { createStore } from "solid-js/store"
 import { type FileDiff } from "@opencode-ai/sdk"
 
-export const SessionReview = (props: { split?: boolean; class?: string; actions?: JSX.Element; diffs: FileDiff[] }) => {
+export interface SessionReviewProps {
+  split?: boolean
+  class?: string
+  classList?: Record<string, boolean | undefined>
+  actions?: JSX.Element
+  diffs: FileDiff[]
+}
+
+export const SessionReview = (props: SessionReviewProps) => {
   const [store, setStore] = createStore({
     open: props.diffs.map((d) => d.file),
   })
@@ -24,16 +38,19 @@ export const SessionReview = (props: { split?: boolean; class?: string; actions?
     }
   }
 
+  const [split, rest] = splitProps(props, ["class", "classList"])
+
   return (
     <div
+      data-component="session-review"
       classList={{
-        "flex flex-col gap-3 h-full overflow-y-auto no-scrollbar": true,
-        [props.class ?? ""]: !!props.class,
+        ...(split.classList ?? {}),
+        [split.class ?? ""]: !!split.class,
       }}
     >
-      <div class="sticky top-0 z-20 bg-background-stronger h-8 shrink-0 flex justify-between items-center self-stretch">
-        <div class="text-14-medium text-text-strong">Session changes</div>
-        <div class="flex items-center gap-x-4 pr-px">
+      <div data-slot="header">
+        <div data-slot="title">Session changes</div>
+        <div data-slot="actions">
           <Button size="normal" icon="chevron-grabber-vertical" onClick={handleExpandOrCollapseAll}>
             <Switch>
               <Match when={store.open.length > 0}>Collapse all</Match>
@@ -47,19 +64,19 @@ export const SessionReview = (props: { split?: boolean; class?: string; actions?
         <For each={props.diffs}>
           {(diff) => (
             <Accordion.Item value={diff.file}>
-              <StickyAccordionHeader class="top-11 data-expanded:before:-top-11">
-                <Accordion.Trigger class="bg-background-stronger">
-                  <div class="flex items-center justify-between w-full gap-5">
-                    <div class="grow flex items-center gap-5 min-w-0">
+              <StickyAccordionHeader>
+                <Accordion.Trigger>
+                  <div data-slot="trigger-content">
+                    <div data-slot="file-info">
                       <FileIcon node={{ path: diff.file, type: "file" }} class="shrink-0 size-4" />
-                      <div class="flex grow min-w-0">
+                      <div data-slot="file-name-container">
                         <Show when={diff.file.includes("/")}>
-                          <span class="text-text-base truncate-start">{getDirectory(diff.file)}&lrm;</span>
+                          <span data-slot="directory">{getDirectory(diff.file)}&lrm;</span>
                         </Show>
-                        <span class="text-text-strong shrink-0">{getFilename(diff.file)}</span>
+                        <span data-slot="filename">{getFilename(diff.file)}</span>
                       </div>
                     </div>
-                    <div class="shrink-0 flex gap-4 items-center justify-end">
+                    <div data-slot="trigger-actions">
                       <DiffChanges changes={diff} />
                       <Icon name="chevron-grabber-vertical" size="small" />
                     </div>

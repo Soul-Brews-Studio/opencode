@@ -14,6 +14,7 @@ import {
   Tooltip,
   ProgressCircle,
   FileIcon,
+  SessionReview,
 } from "@opencode-ai/ui"
 import { MessageProgress } from "@/components/message-progress"
 import {
@@ -48,7 +49,6 @@ import { useSync } from "@/context/sync"
 import { type AssistantMessage as AssistantMessageType } from "@opencode-ai/sdk"
 import { Markdown, Spinner, StickyAccordionHeader } from "@opencode-ai/ui"
 import { useSession } from "@/context/session"
-import { SessionReview } from "@/components/session-review"
 import { useLayout } from "@/context/layout"
 import { createSessionSeen } from "@/hooks/create-session-seen"
 
