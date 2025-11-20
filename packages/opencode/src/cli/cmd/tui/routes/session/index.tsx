@@ -42,7 +42,7 @@ import type { EditTool } from "@/tool/edit"
 import type { PatchTool } from "@/tool/patch"
 import type { WebFetchTool } from "@/tool/webfetch"
 import type { TaskTool } from "@/tool/task"
-import { useKeyboard, useRenderer, useTerminalDimensions, type BoxProps, type JSX } from "@opentui/solid"
+import { useRenderer, useTerminalDimensions, type BoxProps, type JSX } from "@opentui/solid"
 import { useSDK } from "@tui/context/sdk"
 import { useCommandDialog } from "@tui/component/dialog-command"
 import { Shimmer } from "@tui/ui/shimmer"
@@ -52,11 +52,11 @@ import { parsePatch } from "diff"
 import { useDialog } from "../../ui/dialog"
 import { DialogMessage } from "./dialog-message"
 import type { PromptInfo } from "../../component/prompt/history"
-import { iife } from "@/util/iife"
 import { DialogConfirm } from "@tui/ui/dialog-confirm"
 import { DialogPrompt } from "@tui/ui/dialog-prompt"
 import { DialogTimeline } from "./dialog-timeline"
 import { DialogSessionRename } from "../../component/dialog-session-rename"
+import { DialogPermission } from "../../component/dialog-permission"
 import { Sidebar } from "./sidebar"
 import { LANGUAGE_EXTENSIONS } from "@/lsp/language"
 import parsers from "../../../../../../parsers-config.ts"
@@ -64,8 +64,6 @@ import { Clipboard } from "../../util/clipboard"
 import { Toast, useToast } from "../../ui/toast"
 import { useKV } from "../../context/kv.tsx"
 import { Editor } from "../../util/editor"
-import { Global } from "@/global"
-import fs from "fs/promises"
 import stripAnsi from "strip-ansi"
 
 addDefaultParsers(parsers.parsers)
@@ -148,31 +146,31 @@ export function Session() {
   let scroll: ScrollBoxRenderable
   let prompt: PromptRef
   const keybind = useKeybind()
+  const processedPermissions = new Set<string>()
 
-  useKeyboard((evt) => {
+  // Handle permission requests with dialog
+  createEffect(() => {
+    const first = permissions()[0]
+    if (!first) return
+
+    // If we've already processed this permission, don't show dialog again
+    if (processedPermissions.has(first.id)) return
+
+    // Only show dialog if no other dialogs are open
     if (dialog.stack.length > 0) return
 
-    const first = permissions()[0]
-    if (first) {
-      const response = iife(() => {
-        if (evt.name === "return") return "once"
-        if (evt.name === "a") return "always"
-        if (evt.name === "d") return "reject"
-        if (evt.name === "escape") return "reject"
-        return
+    DialogPermission.show(dialog, first, (response: "once" | "always" | "reject") => {
+      processedPermissions.add(first.id)
+      sdk.client.postSessionIdPermissionsPermissionId({
+        path: {
+          permissionID: first.id,
+          id: route.sessionID,
+        },
+        body: {
+          response: response,
+        },
       })
-      if (response) {
-        sdk.client.postSessionIdPermissionsPermissionId({
-          path: {
-            permissionID: first.id,
-            id: route.sessionID,
-          },
-          body: {
-            response: response,
-          },
-        })
-      }
-    }
+    })
   })
 
   function toBottom() {
@@ -1111,14 +1109,11 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
     const metadata = props.part.state.status === "pending" ? {} : (props.part.state.metadata ?? {})
     const input = props.part.state.input ?? {}
     const container = ToolRegistry.container(props.part.tool)
-    const permissions = sync.data.permission[props.message.sessionID] ?? []
-    const permissionIndex = permissions.findIndex((x) => x.callID === props.part.callID)
-    const permission = permissions[permissionIndex]
 
     const style: BoxProps =
-      container === "block" || permission
+      container === "block"
         ? {
-            border: permissionIndex === 0 ? (["left", "right"] as const) : (["left"] as const),
+            border: ["left"] as const,
             paddingTop: 1,
             paddingBottom: 1,
             paddingLeft: 2,
@@ -1126,7 +1121,7 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
             gap: 1,
             backgroundColor: theme.backgroundPanel,
             customBorderChars: SplitBorder.customBorderChars,
-            borderColor: permissionIndex === 0 ? theme.warning : theme.background,
+            borderColor: theme.background,
           }
         : {
             paddingLeft: 3,
@@ -1164,31 +1159,12 @@ function ToolPart(props: { last: boolean; part: ToolPart; message: AssistantMess
           input={input}
           tool={props.part.tool}
           metadata={metadata}
-          permission={permission?.metadata ?? {}}
+          permission={{}}
           output={props.part.state.status === "completed" ? props.part.state.output : undefined}
         />
         {props.part.state.status === "error" && (
           <box paddingLeft={2}>
             <text fg={theme.error}>{props.part.state.error.replace("Error: ", "")}</text>
-          </box>
-        )}
-        {permission && (
-          <box gap={1}>
-            <text fg={theme.text}>Permission required to run this tool:</text>
-            <box flexDirection="row" gap={2}>
-              <text>
-                <b>enter</b>
-                <span style={{ fg: theme.textMuted }}> accept</span>
-              </text>
-              <text>
-                <b>a</b>
-                <span style={{ fg: theme.textMuted }}> accept always</span>
-              </text>
-              <text>
-                <b>d</b>
-                <span style={{ fg: theme.textMuted }}> deny</span>
-              </text>
-            </box>
           </box>
         )}
       </box>
