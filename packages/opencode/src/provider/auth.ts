@@ -18,10 +18,14 @@ export namespace ProviderAuth {
     return { methods, pending: {} as Record<string, AuthOuathResult> }
   })
 
-  export const Method = z.object({
-    type: z.union([z.literal("oauth"), z.literal("api")]),
-    label: z.string(),
-  })
+  export const Method = z
+    .object({
+      type: z.union([z.literal("oauth"), z.literal("api")]),
+      label: z.string(),
+    })
+    .meta({
+      ref: "ProviderAuthMethod",
+    })
   export type Method = z.infer<typeof Method>
 
   export async function methods() {
@@ -36,19 +40,23 @@ export namespace ProviderAuth {
     )
   }
 
-  export const AuthorizeResult = z.object({
-    url: z.string(),
-    method: z.union([z.literal("auto"), z.literal("code")]),
-    instructions: z.string(),
-  })
-  export type AuthorizeResult = z.infer<typeof AuthorizeResult>
+  export const Authorization = z
+    .object({
+      url: z.string(),
+      method: z.union([z.literal("auto"), z.literal("code")]),
+      instructions: z.string(),
+    })
+    .meta({
+      ref: "ProviderAuthAuthorization",
+    })
+  export type Authorization = z.infer<typeof Authorization>
 
   export const authorize = fn(
     z.object({
       providerID: z.string(),
       method: z.number(),
     }),
-    async (input): Promise<AuthorizeResult | undefined> => {
+    async (input): Promise<Authorization | undefined> => {
       const auth = await state().then((s) => s.methods[input.providerID])
       const method = auth.methods[input.method]
       if (method.type === "oauth") {

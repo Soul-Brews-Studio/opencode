@@ -13,6 +13,7 @@ import type {
   FormatterStatus,
   SessionStatus,
   ProviderListResponse,
+  ProviderAuthMethod,
 } from "@opencode-ai/sdk"
 import { createStore, produce, reconcile } from "solid-js/store"
 import { useSDK } from "@tui/context/sdk"
@@ -30,7 +31,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
       provider: Provider[]
       provider_default: Record<string, string>
       provider_next: ProviderListResponse
-      provider_auth: Record<string, { type: string; label: string }[]>
+      provider_auth: Record<string, ProviderAuthMethod[]>
       agent: Agent[]
       command: Command[]
       permission: {

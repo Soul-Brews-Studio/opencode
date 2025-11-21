@@ -8,7 +8,7 @@ import { proxy } from "hono/proxy"
 import { Session } from "../session"
 import z from "zod"
 import { Provider } from "../provider/provider"
-import { map, mapValues, pipe, values } from "remeda"
+import { mapValues } from "remeda"
 import { NamedError } from "../util/error"
 import { ModelsDev } from "../provider/models"
 import { Ripgrep } from "../file/ripgrep"
@@ -1247,7 +1247,7 @@ export namespace Server {
               description: "Authorization URL and method",
               content: {
                 "application/json": {
-                  schema: resolver(ProviderAuth.AuthorizeResult.optional()),
+                  schema: resolver(ProviderAuth.Authorization.optional()),
                 },
               },
             },

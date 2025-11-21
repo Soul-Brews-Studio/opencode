@@ -1331,6 +1331,17 @@ export type Provider = {
   }
 }
 
+export type ProviderAuthMethod = {
+  type: "oauth" | "api"
+  label: string
+}
+
+export type ProviderAuthAuthorization = {
+  url: string
+  method: "auto" | "code"
+  instructions: string
+}
+
 export type Symbol = {
   name: string
   kind: number
@@ -2538,10 +2549,7 @@ export type ProviderAuthResponses = {
    * Provider auth methods
    */
   200: {
-    [key: string]: Array<{
-      type: "oauth" | "api"
-      label: string
-    }>
+    [key: string]: Array<ProviderAuthMethod>
   }
 }
 
@@ -2579,11 +2587,7 @@ export type ProviderOauthAuthorizeResponses = {
   /**
    * Authorization URL and method
    */
-  200: {
-    url: string
-    method: "auto" | "code"
-    instructions: string
-  }
+  200: ProviderAuthAuthorization
 }
 
 export type ProviderOauthAuthorizeResponse = ProviderOauthAuthorizeResponses[keyof ProviderOauthAuthorizeResponses]
