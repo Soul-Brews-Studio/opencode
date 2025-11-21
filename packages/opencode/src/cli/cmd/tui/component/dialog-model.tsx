@@ -3,10 +3,11 @@ import { useLocal } from "@tui/context/local"
 import { useSync } from "@tui/context/sync"
 import { map, pipe, flatMap, entries, filter, isDeepEqual, sortBy } from "remeda"
 import { DialogSelect, type DialogSelectOption, type DialogSelectRef } from "@tui/ui/dialog-select"
-import { DialogProvider, useDialog } from "@tui/ui/dialog"
+import { useDialog } from "@tui/ui/dialog"
 import { useTheme } from "../context/theme"
 import { DialogPrompt } from "../ui/dialog-prompt"
 import { useSDK } from "../context/sdk"
+import { createDialogProviderOptions, DialogProvider } from "./dialog-provider"
 
 function Free() {
   const { theme } = useTheme()
@@ -34,6 +35,7 @@ export function DialogModel() {
   )
 
   const showRecent = createMemo(() => !ref()?.filter && local.model.recent().length > 0 && connected())
+  const providers = createDialogProviderOptions()
 
   const options = createMemo(() => {
     return [
@@ -105,32 +107,13 @@ export function DialogModel() {
       ),
       ...(!connected()
         ? pipe(
-            sync.data.provider_next.all,
-            map((provider) => ({
-              title: provider.name,
-              category: "Popular providers",
-              value: provider.id,
-              description: {
-                opencode: "(Recommended)",
-                anthropic: "(Claude Max or API key)",
-              }[provider.id],
-              async onSelect() {
-                const key = await DialogPrompt.show(dialog, "Enter API key")
-                if (!key) return
-                await sdk.client.auth.set({
-                  path: {
-                    id: provider.id,
-                  },
-                  body: {
-                    type: "api",
-                    key,
-                  },
-                })
-                await sdk.client.instance.dispose()
-                await sync.bootstrap()
-                dialog.replace(() => <DialogModel />)
-              },
-            })),
+            providers(),
+            map((option) => {
+              return {
+                ...option,
+                category: "Popular providers",
+              }
+            }),
             filter((x) => PROVIDER_PRIORITY[x.value] !== undefined),
             sortBy((x) => PROVIDER_PRIORITY[x.value] ?? 99),
           )
@@ -144,7 +127,7 @@ export function DialogModel() {
         {
           keybind: { ctrl: true, name: "a", meta: false, shift: false, leader: false },
           title: connected() ? "Connect provider" : "More providers",
-          onTrigger(option) {
+          onTrigger() {
             dialog.replace(() => <DialogProvider />)
           },
         },
