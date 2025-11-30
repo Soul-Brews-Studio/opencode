@@ -7,16 +7,20 @@ import { fileURLToPath } from "url"
 const dir = fileURLToPath(new URL("..", import.meta.url))
 process.chdir(dir)
 
+const hostTarget = `${pkg.name}-${process.platform}-${process.arch}`
 const { binaries } = await import("./build.ts")
 {
-  const name = `${pkg.name}-${process.platform}-${process.arch}`
-  console.log(`smoke test: running dist/${name}/bin/opencode --version`)
-  await $`./dist/${name}/bin/opencode --version`
+  console.log(`smoke test: running dist/${hostTarget}/bin/opencode --version`)
+  await $`./dist/${hostTarget}/bin/opencode --version`
 }
 
 await $`mkdir -p ./dist/${pkg.name}`
 await $`cp -r ./bin ./dist/${pkg.name}/bin`
 await $`cp ./script/postinstall.mjs ./dist/${pkg.name}/postinstall.mjs`
+{
+  console.log(`smoke test: running node dist/${pkg.name}/bin/opencode --version`)
+  await $`OPENCODE_BIN_PATH=./dist/${hostTarget}/bin/opencode node ./dist/${pkg.name}/bin/opencode --version`
+}
 
 await Bun.file(`./dist/${pkg.name}/package.json`).write(
   JSON.stringify(

@@ -68,46 +68,38 @@ function findBinary() {
   }
 }
 
-function prepareBinDirectory(binaryName) {
-  const binDir = path.join(__dirname, "bin")
-  const targetPath = path.join(binDir, binaryName)
+const cacheName = "opencode-bin"
 
-  // Ensure bin directory exists
+function ensureBinDir() {
+  const binDir = path.join(__dirname, "bin")
   if (!fs.existsSync(binDir)) {
     fs.mkdirSync(binDir, { recursive: true })
   }
-
-  // Remove existing binary/symlink if it exists
-  if (fs.existsSync(targetPath)) {
-    fs.unlinkSync(targetPath)
-  }
-
-  return { binDir, targetPath }
+  return binDir
 }
 
-function symlinkBinary(sourcePath, binaryName) {
-  const { targetPath } = prepareBinDirectory(binaryName)
-
-  fs.symlinkSync(sourcePath, targetPath)
-  console.log(`opencode binary symlinked: ${targetPath} -> ${sourcePath}`)
-
-  // Verify the file exists after operation
-  if (!fs.existsSync(targetPath)) {
-    throw new Error(`Failed to symlink binary to ${targetPath}`)
+function cacheBinary(sourcePath) {
+  const binDir = ensureBinDir()
+  const linkPath = path.join(binDir, cacheName)
+  if (fs.existsSync(linkPath)) {
+    fs.rmSync(linkPath)
+  }
+  fs.symlinkSync(sourcePath, linkPath)
+  console.log(`opencode binary cached: ${linkPath} -> ${sourcePath}`)
+  if (!fs.existsSync(linkPath)) {
+    throw new Error(`Failed to cache binary at ${linkPath}`)
   }
 }
 
 async function main() {
   try {
     if (os.platform() === "win32") {
-      // On Windows, the .exe is already included in the package and bin field points to it
-      // No postinstall setup needed
       console.log("Windows detected: binary setup not needed (using packaged .exe)")
       return
     }
 
-    const { binaryPath, binaryName } = findBinary()
-    symlinkBinary(binaryPath, binaryName)
+    const { binaryPath } = findBinary()
+    cacheBinary(binaryPath)
   } catch (error) {
     console.error("Failed to setup opencode binary:", error.message)
     process.exit(1)

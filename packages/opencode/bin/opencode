@@ -24,6 +24,10 @@ if (envPath) {
 
 const scriptPath = fs.realpathSync(__filename)
 const scriptDir = path.dirname(scriptPath)
+const cachedBinary = path.join(scriptDir, "opencode-bin")
+if (fs.existsSync(cachedBinary)) {
+  run(cachedBinary)
+}
 
 const platformMap = {
   darwin: "darwin",
