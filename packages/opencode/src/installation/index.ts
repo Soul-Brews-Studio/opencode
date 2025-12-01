@@ -173,23 +173,9 @@ export namespace Installation {
     const channel = CHANNEL === "latest" ? `latest-${major}` : CHANNEL
     const registry = await getRegistryUrl()
     const registryUrl = registry.endsWith("/") ? registry.slice(0, -1) : registry
-    return fetch(`${registryUrl}/opencode-ai/${channel}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(res.statusText)
-        return res.json()
-      })
-      .then((data: any) => data.version)
-      .catch(() => {
-        // Fallback to default registry if configured registry fails
-        if (registry !== "https://registry.npmjs.org") {
-          return fetch(`https://registry.npmjs.org/opencode-ai/${channel}`)
-            .then((res) => {
-              if (!res.ok) throw new Error(res.statusText)
-              return res.json()
-            })
-            .then((data: any) => data.version)
-        }
-        throw new Error("Failed to fetch latest version")
-      })
+    const res = await fetch(`${registryUrl}/opencode-ai/${channel}`)
+    if (!res.ok) throw new Error(res.statusText)
+    const data = await res.json()
+    return data.version
   }
 }
