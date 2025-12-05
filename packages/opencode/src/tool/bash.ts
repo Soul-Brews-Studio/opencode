@@ -90,6 +90,11 @@ export const BashTool = Tool.define("bash", async () => {
     parameters: z.object({
       command: z.string().describe("The command to execute"),
       timeout: z.number().describe("Optional timeout in milliseconds").optional(),
+      workdir: z
+        .string()
+        .default(Instance.directory)
+        .describe("The working directory to execute the command in")
+        .optional(),
       description: z
         .string()
         .describe(
@@ -215,7 +220,7 @@ export const BashTool = Tool.define("bash", async () => {
 
       const proc = spawn(params.command, {
         shell,
-        cwd: Instance.directory,
+        cwd: params.workdir || Instance.directory,
         env: {
           ...process.env,
         },
