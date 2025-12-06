@@ -117,7 +117,7 @@ jobs:
       - name: Setup Apple API Key
         if: ${{ runner.os == 'macOS' }}
         run: |
-          echo "${{ secrets.APPLE_API_KEY_PATH }}" > $RUNNER_TEMP/apple-api-key.p8
+          base64 -d <<< "${{ secrets.APPLE_API_KEY_PATH }}" > $RUNNER_TEMP/apple-api-key.p8
 
       - run: git fetch --force --tags
 
