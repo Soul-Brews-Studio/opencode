@@ -7,7 +7,7 @@ import { serializeArrayParam, serializeObjectParam, serializePrimitiveParam } fr
 import { getUrl } from "../core/utils.gen.js"
 import type { Client, ClientOptions, Config, RequestOptions } from "./types.gen.js"
 
-export const createQuerySerializer = <T = unknown>({ parameters = {}, ...args }: QuerySerializerOptions = {}) => {
+export const createQuerySerializer = <T = unknown>({ allowReserved, array, object }: QuerySerializerOptions = {}) => {
   const querySerializer = (queryParams: T) => {
     const search: string[] = []
     if (queryParams && typeof queryParams === "object") {
@@ -18,31 +18,29 @@ export const createQuerySerializer = <T = unknown>({ parameters = {}, ...args }:
           continue
         }
 
-        const options = parameters[name] || args
-
         if (Array.isArray(value)) {
           const serializedArray = serializeArrayParam({
-            allowReserved: options.allowReserved,
+            allowReserved,
             explode: true,
             name,
             style: "form",
             value,
-            ...options.array,
+            ...array,
           })
           if (serializedArray) search.push(serializedArray)
         } else if (typeof value === "object") {
           const serializedObject = serializeObjectParam({
-            allowReserved: options.allowReserved,
+            allowReserved,
             explode: true,
             name,
             style: "deepObject",
             value: value as Record<string, unknown>,
-            ...options.object,
+            ...object,
           })
           if (serializedObject) search.push(serializedObject)
         } else {
           const serializedPrimitive = serializePrimitiveParam({
-            allowReserved: options.allowReserved,
+            allowReserved,
             name,
             value: value as string,
           })
@@ -164,22 +162,14 @@ export const mergeConfigs = (a: Config, b: Config): Config => {
   return config
 }
 
-const headersEntries = (headers: Headers): Array<[string, string]> => {
-  const entries: Array<[string, string]> = []
-  headers.forEach((value, key) => {
-    entries.push([key, value])
-  })
-  return entries
-}
-
 export const mergeHeaders = (...headers: Array<Required<Config>["headers"] | undefined>): Headers => {
   const mergedHeaders = new Headers()
   for (const header of headers) {
-    if (!header) {
+    if (!header || typeof header !== "object") {
       continue
     }
 
-    const iterator = header instanceof Headers ? headersEntries(header) : Object.entries(header)
+    const iterator = header instanceof Headers ? header.entries() : Object.entries(header)
 
     for (const [key, value] of iterator) {
       if (value === null) {
@@ -210,53 +200,61 @@ type ReqInterceptor<Req, Options> = (request: Req, options: Options) => Req | Pr
 type ResInterceptor<Res, Req, Options> = (response: Res, request: Req, options: Options) => Res | Promise<Res>
 
 class Interceptors<Interceptor> {
-  fns: Array<Interceptor | null> = []
+  _fns: (Interceptor | null)[]
 
-  clear(): void {
-    this.fns = []
+  constructor() {
+    this._fns = []
   }
 
-  eject(id: number | Interceptor): void {
-    const index = this.getInterceptorIndex(id)
-    if (this.fns[index]) {
-      this.fns[index] = null
-    }
-  }
-
-  exists(id: number | Interceptor): boolean {
-    const index = this.getInterceptorIndex(id)
-    return Boolean(this.fns[index])
+  clear() {
+    this._fns = []
   }
 
   getInterceptorIndex(id: number | Interceptor): number {
     if (typeof id === "number") {
-      return this.fns[id] ? id : -1
+      return this._fns[id] ? id : -1
+    } else {
+      return this._fns.indexOf(id)
     }
-    return this.fns.indexOf(id)
   }
-
-  update(id: number | Interceptor, fn: Interceptor): number | Interceptor | false {
+  exists(id: number | Interceptor) {
     const index = this.getInterceptorIndex(id)
-    if (this.fns[index]) {
-      this.fns[index] = fn
-      return id
+    return !!this._fns[index]
+  }
+
+  eject(id: number | Interceptor) {
+    const index = this.getInterceptorIndex(id)
+    if (this._fns[index]) {
+      this._fns[index] = null
     }
-    return false
   }
 
-  use(fn: Interceptor): number {
-    this.fns.push(fn)
-    return this.fns.length - 1
+  update(id: number | Interceptor, fn: Interceptor) {
+    const index = this.getInterceptorIndex(id)
+    if (this._fns[index]) {
+      this._fns[index] = fn
+      return id
+    } else {
+      return false
+    }
+  }
+
+  use(fn: Interceptor) {
+    this._fns = [...this._fns, fn]
+    return this._fns.length - 1
   }
 }
 
+// `createInterceptors()` response, meant for external use as it does not
+// expose internals
 export interface Middleware<Req, Res, Err, Options> {
-  error: Interceptors<ErrInterceptor<Err, Res, Req, Options>>
-  request: Interceptors<ReqInterceptor<Req, Options>>
-  response: Interceptors<ResInterceptor<Res, Req, Options>>
+  error: Pick<Interceptors<ErrInterceptor<Err, Res, Req, Options>>, "eject" | "use">
+  request: Pick<Interceptors<ReqInterceptor<Req, Options>>, "eject" | "use">
+  response: Pick<Interceptors<ResInterceptor<Res, Req, Options>>, "eject" | "use">
 }
 
-export const createInterceptors = <Req, Res, Err, Options>(): Middleware<Req, Res, Err, Options> => ({
+// do not add `Middleware` as return type so we can use _fns internally
+export const createInterceptors = <Req, Res, Err, Options>() => ({
   error: new Interceptors<ErrInterceptor<Err, Res, Req, Options>>(),
   request: new Interceptors<ReqInterceptor<Req, Options>>(),
   response: new Interceptors<ResInterceptor<Res, Req, Options>>(),

@@ -1045,7 +1045,7 @@ function UserMessage(props: {
               </box>
             </Show>
             <text fg={theme.textMuted}>
-              {ctx.usernameVisible() ? `${sync.data.config.username ?? "You"}` : "You"}
+              {ctx.usernameVisible() ? `${sync.data.config.username ?? "You "}` : "You "}
               <Show
                 when={queued()}
                 fallback={
