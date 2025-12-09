@@ -7,10 +7,7 @@
   "instructions": ["STYLE_GUIDE.md"],
   "provider": {
     "opencode": {
-      "options": {
-        // "baseURL": "https://webhook.site/bfd0410c-3a26-420f-bf59-271726d08cfd",
-        // "baseURL": "http://localhost:8080",
-      },
+      "options": {},
     },
   },
   "mcp": {
