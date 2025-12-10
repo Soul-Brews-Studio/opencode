@@ -74,6 +74,7 @@ export namespace ProviderTransform {
       return result
     }
 
+    // TODO: is this actually correct??? Or should it just match the other reasoning_content handling
     // DeepSeek: Handle reasoning_content for tool call continuations
     // - With tool calls: Include reasoning_content in providerOptions so model can continue reasoning
     // - Without tool calls: Strip reasoning (new turn doesn't need previous reasoning)
@@ -110,6 +111,45 @@ export namespace ProviderTransform {
             content: filteredContent,
           }
         }
+
+        return msg
+      })
+    }
+
+    if (
+      model.capabilities.interleaved &&
+      typeof model.capabilities.interleaved === "object" &&
+      model.capabilities.interleaved.field === "reasoning_content"
+    ) {
+      return msgs.map((msg) => {
+        if (msg.role === "assistant" && Array.isArray(msg.content)) {
+          const reasoningParts = msg.content.filter((part: any) => part.type === "reasoning")
+          const reasoningText = reasoningParts.map((part: any) => part.text).join("")
+
+          // Filter out reasoning parts from content
+          const filteredContent = msg.content.filter((part: any) => part.type !== "reasoning")
+
+          // Include reasoning_content directly on the message for all assistant messages
+          if (reasoningText) {
+            return {
+              ...msg,
+              content: filteredContent,
+              providerOptions: {
+                ...msg.providerOptions,
+                openaiCompatible: {
+                  ...(msg.providerOptions as any)?.openaiCompatible,
+                  reasoning_content: reasoningText,
+                },
+              },
+            }
+          }
+
+          return {
+            ...msg,
+            content: filteredContent,
+          }
+        }
+
         return msg
       })
     }
@@ -273,23 +313,7 @@ export namespace ProviderTransform {
     return options
   }
 
-  export function providerOptions(model: Provider.Model, options: { [x: string]: any }, messages: ModelMessage[]) {
-    if (model.capabilities.interleaved && typeof model.capabilities.interleaved === "object") {
-      const cot = []
-      const assistantMessages = messages.filter((msg) => msg.role === "assistant")
-      for (const msg of assistantMessages) {
-        for (const part of msg.content) {
-          if (typeof part === "string") {
-            continue
-          }
-          if (part.type === "reasoning") {
-            cot.push(part)
-          }
-        }
-      }
-      options[model.capabilities.interleaved.field] = cot
-    }
-
+  export function providerOptions(model: Provider.Model, options: { [x: string]: any }) {
     switch (model.api.npm) {
       case "@ai-sdk/openai":
       case "@ai-sdk/azure":
