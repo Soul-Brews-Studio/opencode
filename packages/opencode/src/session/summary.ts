@@ -1,20 +1,19 @@
 import { Provider } from "@/provider/provider"
-import { Config } from "@/config/config"
+
 import { fn } from "@/util/fn"
 import z from "zod"
 import { Session } from "."
-import { generateText, type ModelMessage } from "ai"
+
 import { MessageV2 } from "./message-v2"
 import { Identifier } from "@/id/id"
 import { Snapshot } from "@/snapshot"
-import { ProviderTransform } from "@/provider/transform"
-import { SystemPrompt } from "./system"
+
 import { Log } from "@/util/log"
 import path from "path"
 import { Instance } from "@/project/instance"
 import { Storage } from "@/storage/storage"
 import { Bus } from "@/bus"
-import { mergeDeep, pipe } from "remeda"
+
 import { LLM } from "./llm"
 import { Agent } from "@/agent/agent"
 
@@ -63,7 +62,6 @@ export namespace SessionSummary {
   }
 
   async function summarizeMessage(input: { messageID: string; messages: MessageV2.WithParts[] }) {
-    const cfg = await Config.get()
     const messages = input.messages.filter(
       (m) => m.info.id === input.messageID || (m.info.role === "assistant" && m.info.parentID === input.messageID),
     )
@@ -80,22 +78,16 @@ export namespace SessionSummary {
     const small =
       (await Provider.getSmallModel(assistantMsg.providerID)) ??
       (await Provider.getModel(assistantMsg.providerID, assistantMsg.modelID))
-    const language = await Provider.getLanguage(small)
-
-    const options = pipe(
-      {},
-      mergeDeep(ProviderTransform.options(small, assistantMsg.sessionID)),
-      mergeDeep(ProviderTransform.smallOptions(small)),
-      mergeDeep(small.options),
-    )
 
     const textPart = msgWithParts.parts.find((p) => p.type === "text" && !p.synthetic) as MessageV2.TextPart
     if (textPart && !userMsg.summary?.title) {
+      const agent = await Agent.get("title")
       const stream = await LLM.stream({
-        agent: await Agent.get("summary"),
+        agent,
         user: userMsg,
         tools: {},
-        model: small,
+        model: agent.model ? await Provider.getModel(agent.model.providerID, agent.model.modelID) : small,
+        small: true,
         messages: [
           {
             role: "user" as const,
@@ -107,7 +99,6 @@ export namespace SessionSummary {
             `,
           },
         ],
-        small: true,
         abort: new AbortController().signal,
         sessionID: userMsg.sessionID,
         system: [],
@@ -133,34 +124,30 @@ export namespace SessionSummary {
             }
           }
         }
-        const result = await generateText({
-          model: language,
-          maxOutputTokens: 100,
-          providerOptions: ProviderTransform.providerOptions(small, options),
+        const summaryAgent = await Agent.get("summary")
+        const stream = await LLM.stream({
+          agent: summaryAgent,
+          user: userMsg,
+          tools: {},
+          model: summaryAgent.model
+            ? await Provider.getModel(summaryAgent.model.providerID, summaryAgent.model.modelID)
+            : small,
+          small: true,
           messages: [
-            ...SystemPrompt.summarize(small.providerID).map(
-              (x): ModelMessage => ({
-                role: "system",
-                content: x,
-              }),
-            ),
             ...MessageV2.toModelMessage(messages),
             {
-              role: "user",
+              role: "user" as const,
               content: `Summarize the above conversation according to your system prompts.`,
             },
           ],
-          headers: small.headers,
-          experimental_telemetry: {
-            isEnabled: cfg.experimental?.openTelemetry,
-            metadata: {
-              userId: cfg.username ?? "unknown",
-              sessionId: assistantMsg.sessionID,
-            },
-          },
-        }).catch(() => {})
+          abort: new AbortController().signal,
+          sessionID: userMsg.sessionID,
+          system: [],
+          retries: 3,
+        })
+        const result = await stream.text
         if (result) {
-          userMsg.summary.body = result.text
+          userMsg.summary.body = result
         }
       }
       await Session.updateMessage(userMsg)

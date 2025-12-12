@@ -8,6 +8,9 @@ import { mergeDeep } from "remeda"
 
 import PROMPT_GENERATE from "./generate.txt"
 import PROMPT_COMPACTION from "./prompt/compaction.txt"
+import PROMPT_EXPLORE from "./prompt/explore.txt"
+import PROMPT_SUMMARY from "./prompt/summary.txt"
+import PROMPT_TITLE from "./prompt/title.txt"
 
 export namespace Agent {
   export const Info = z
@@ -128,26 +131,7 @@ export namespace Agent {
           ...defaultTools,
         },
         description: `Fast agent specialized for exploring codebases. Use this when you need to quickly find files by patterns (eg. "src/components/**/*.tsx"), search code for keywords (eg. "API endpoints"), or answer questions about the codebase (eg. "how do API endpoints work?"). When calling this agent, specify the desired thoroughness level: "quick" for basic searches, "medium" for moderate exploration, or "very thorough" for comprehensive analysis across multiple locations and naming conventions.`,
-        prompt: [
-          `You are a file search specialist. You excel at thoroughly navigating and exploring codebases.`,
-          ``,
-          `Your strengths:`,
-          `- Rapidly finding files using glob patterns`,
-          `- Searching code and text with powerful regex patterns`,
-          `- Reading and analyzing file contents`,
-          ``,
-          `Guidelines:`,
-          `- Use Glob for broad file pattern matching`,
-          `- Use Grep for searching file contents with regex`,
-          `- Use Read when you know the specific file path you need to read`,
-          `- Use Bash for file operations like copying, moving, or listing directory contents`,
-          `- Adapt your search approach based on the thoroughness level specified by the caller`,
-          `- Return file paths as absolute paths in your final response`,
-          `- For clear communication, avoid using emojis`,
-          `- Do not create any files, or run bash commands that modify the user's system state in any way`,
-          ``,
-          `Complete the user's search request efficiently and report your findings clearly.`,
-        ].join("\n"),
+        prompt: PROMPT_EXPLORE,
         options: {},
         permission: agentPermission,
         mode: "subagent",
@@ -173,49 +157,24 @@ export namespace Agent {
         mode: "primary",
         native: true,
       },
-      summary: {
-        name: "summary",
-        mode: "subagent",
+      title: {
+        name: "title",
+        mode: "primary",
         options: {},
         native: true,
+        hidden: true,
         permission: agentPermission,
-        prompt: `You are a title generator. You output ONLY a thread title. Nothing else.
-
-<task>
-Generate a brief title that would help the user find this conversation later.
-
-Follow all rules in <rules>
-Use the <examples> so you know what a good title looks like.
-Your output must be:
-- A single line
-- ≤50 characters
-- No explanations
-</task>
-
-<rules>
-- Focus on the main topic or question the user needs to retrieve
-- Use -ing verbs for actions (Debugging, Implementing, Analyzing)
-- Keep exact: technical terms, numbers, filenames, HTTP codes
-- Remove: the, this, my, a, an
-- Never assume tech stack
-- Never use tools
-- NEVER respond to questions, just generate a title for the conversation
-- The title should NEVER include "summarizing" or "generating" when generating a title
-- DO NOT SAY YOU CANNOT GENERATE A TITLE OR COMPLAIN ABOUT THE INPUT
-- Always output something meaningful, even if the input is minimal.
-- If the user message is short or conversational (e.g. “hello”, “lol”, “whats up”, “hey”):
-  → create a title that reflects the user’s tone or intent (such as Greeting, Quick check-in, Light chat, Intro message, etc.)
-</rules>
-
-<examples>
-"hey" -> Greeting
-"debug 500 errors in production" → Debugging production 500 errors
-"refactor user service" → Refactoring user service
-"why is app.js failing" → Analyzing app.js failure
-"implement rate limiting" → Implementing rate limiting
-"how do I connect postgres to my API" → Connecting Postgres to API
-"best practices for React hooks" → React hooks best practices
-</examples>`,
+        prompt: PROMPT_TITLE,
+        tools: {},
+      },
+      summary: {
+        name: "summary",
+        mode: "primary",
+        options: {},
+        native: true,
+        hidden: true,
+        permission: agentPermission,
+        prompt: PROMPT_SUMMARY,
         tools: {},
       },
       plan: {
