@@ -46,17 +46,19 @@ export namespace LLM {
     })
     const [language, cfg] = await Promise.all([Provider.getLanguage(input.model), Config.get()])
 
-    const [first, ...rest] = [
-      // header prompt for providers with auth checks
-      ...SystemPrompt.header(input.model.providerID),
-      // use agent prompt otherwise provider prompt
-      ...(input.agent.prompt ? [input.agent.prompt] : SystemPrompt.provider(input.model)),
-      // any custom prompt passed into this call
-      ...input.system,
-      // any custom prompt from last user message
-      ...(input.user.system ? [input.user.system] : []),
-    ]
-    const system = [first, rest.join("\n")].filter((x) => x)
+    const system = SystemPrompt.header(input.model.providerID)
+    system.push(
+      [
+        // use agent prompt otherwise provider prompt
+        ...(input.agent.prompt ? [input.agent.prompt] : SystemPrompt.provider(input.model)),
+        // any custom prompt passed into this call
+        ...input.system,
+        // any custom prompt from last user message
+        ...(input.user.system ? [input.user.system] : []),
+      ]
+        .filter((x) => x)
+        .join("\n"),
+    )
 
     const params = await Plugin.trigger(
       "chat.params",
