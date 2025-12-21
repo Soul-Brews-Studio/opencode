@@ -64,6 +64,7 @@ import { ConstrainDragXAxis } from "@/utils/solid-dnd"
 import { navStart } from "@/utils/perf"
 import { DialogSelectDirectory } from "@/components/dialog-select-directory"
 import { DialogEditProject } from "@/components/dialog-edit-project"
+import { ReleaseNotesHandler } from "@/components/release-notes-handler"
 import { Titlebar } from "@/components/titlebar"
 import { useServer } from "@/context/server"
 
@@ -1182,6 +1183,11 @@ export default function Layout(props: ParentProps) {
   )
 
   createEffect(() => {
+    const sidebarWidth = layout.sidebar.opened() ? layout.sidebar.width() : 48
+    document.documentElement.style.setProperty("--dialog-left-margin", `${sidebarWidth}px`)
+  })
+
+  createEffect(() => {
     const project = currentProject()
     if (!project) return
 
@@ -2146,6 +2152,7 @@ export default function Layout(props: ParentProps) {
         </main>
       </div>
       <Toast.Region />
+      <ReleaseNotesHandler />
     </div>
   )
 }
