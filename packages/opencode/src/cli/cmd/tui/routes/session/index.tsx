@@ -129,6 +129,7 @@ export function Session() {
   const [diffWrapMode, setDiffWrapMode] = createSignal<"word" | "none">("word")
 
   const wide = createMemo(() => dimensions().width > 120)
+  const tall = createMemo(() => dimensions().height > 40)
   const sidebarVisible = createMemo(() => {
     if (session()?.parentID) return false
     if (sidebar() === "show") return true
@@ -1012,7 +1013,7 @@ export function Session() {
                 sessionID={route.sessionID}
               />
             </box>
-            <Show when={!sidebarVisible()}>
+            <Show when={!sidebarVisible() && tall()}>
               <Footer />
             </Show>
           </Show>
