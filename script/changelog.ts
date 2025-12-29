@@ -26,90 +26,140 @@ export async function getLatestRelease() {
     .then((data: any) => data.tag_name.replace(/^v/, ""))
 }
 
-export async function getCommits(from: string, to: string) {
-  const fromRef = from.startsWith("v") ? from : `v${from}`
-  const toRef = to === "HEAD" ? to : to.startsWith("v") ? to : `v${to}`
-  const log =
-    await $`git log ${fromRef}..${toRef} --oneline --format="%h %s" -- packages/opencode packages/sdk packages/plugin packages/desktop packages/app`.text()
-  return log.split("\n").filter((line) => line && !line.match(/^\w+ (ignore:|test:|chore:|ci:)/i))
+type Commit = {
+  hash: string
+  author: string | null
+  message: string
+  areas: Set<string>
 }
 
-export async function generateChangelog(from: string, to: string, commits: string[]) {
-  const opencode = await createOpencode()
-  const session = await opencode.client.session.create()
-  console.log("generating changelog since " + from)
+export async function getCommits(from: string, to: string): Promise<Commit[]> {
+  const fromRef = from.startsWith("v") ? from : `v${from}`
+  const toRef = to === "HEAD" ? to : to.startsWith("v") ? to : `v${to}`
 
-  const raw = await opencode.client.session
+  // Get commit data with GitHub usernames from the API
+  const compare =
+    await $`gh api "/repos/sst/opencode/compare/${fromRef}...${toRef}" --jq '.commits[] | {sha: .sha, login: .author.login, message: .commit.message}'`.text()
+
+  const commitData = new Map<string, { login: string | null; message: string }>()
+  for (const line of compare.split("\n").filter(Boolean)) {
+    const data = JSON.parse(line) as { sha: string; login: string | null; message: string }
+    commitData.set(data.sha, { login: data.login, message: data.message.split("\n")[0] ?? "" })
+  }
+
+  // Get commits that touch the relevant packages
+  const log =
+    await $`git log ${fromRef}..${toRef} --oneline --format="%H" -- packages/opencode packages/sdk packages/plugin packages/desktop packages/app sdks/vscode packages/extensions github`.text()
+  const hashes = log.split("\n").filter(Boolean)
+
+  const commits: Commit[] = []
+  for (const hash of hashes) {
+    const data = commitData.get(hash)
+    if (!data) continue
+
+    const message = data.message
+    if (message.match(/^(ignore:|test:|chore:|ci:|release:)/i)) continue
+
+    const files = await $`git diff-tree --no-commit-id --name-only -r ${hash}`.text()
+    const areas = new Set<string>()
+
+    for (const file of files.split("\n").filter(Boolean)) {
+      if (file.startsWith("packages/opencode/src/cli/cmd/tui/")) areas.add("tui")
+      else if (file.startsWith("packages/opencode/")) areas.add("core")
+      else if (file.startsWith("packages/desktop/src-tauri/")) areas.add("tauri")
+      else if (file.startsWith("packages/desktop/")) areas.add("app")
+      else if (file.startsWith("packages/app/")) areas.add("app")
+      else if (file.startsWith("packages/sdk/")) areas.add("sdk")
+      else if (file.startsWith("packages/plugin/")) areas.add("plugin")
+      else if (file.startsWith("packages/extensions/")) areas.add("extensions/zed")
+      else if (file.startsWith("sdks/vscode/")) areas.add("extensions/vscode")
+      else if (file.startsWith("github/")) areas.add("github")
+    }
+
+    if (areas.size === 0) continue
+
+    commits.push({
+      hash: hash.slice(0, 7),
+      author: data.login,
+      message,
+      areas,
+    })
+  }
+
+  return commits
+}
+
+const sections = {
+  core: "Core",
+  tui: "TUI",
+  app: "Desktop",
+  tauri: "Desktop",
+  sdk: "SDK",
+  plugin: "SDK",
+  "extensions/zed": "Extensions",
+  "extensions/vscode": "Extensions",
+  github: "Extensions",
+} as const
+
+function getSection(areas: Set<string>): string {
+  // Priority order for multi-area commits
+  const priority = ["core", "tui", "app", "tauri", "sdk", "plugin", "extensions/zed", "extensions/vscode", "github"]
+  for (const area of priority) {
+    if (areas.has(area)) return sections[area as keyof typeof sections]
+  }
+  return "Core"
+}
+
+async function summarizeCommit(
+  opencode: Awaited<ReturnType<typeof createOpencode>>,
+  sessionId: string,
+  message: string,
+): Promise<string> {
+  const result = await opencode.client.session
     .prompt({
-      path: {
-        id: session.data!.id,
-      },
+      path: { id: sessionId },
       body: {
-        model: {
-          providerID: "opencode",
-          modelID: "claude-sonnet-4-5",
-        },
+        model: { providerID: "opencode", modelID: "claude-sonnet-4-5" },
         parts: [
           {
             type: "text",
-            text: `
-            Analyze these commits and generate a changelog of all notable user facing changes, grouped by area.
+            text: `Summarize this commit message for a changelog entry. Return ONLY a single line summary starting with a capital letter. Be concise but specific. If the commit message is already well-written, just clean it up (capitalize, fix typos, proper grammar). Do not include any prefixes like "fix:" or "feat:".
 
-            Each commit below includes:
-            - [author: username] showing the GitHub username of the commit author
-            - [areas: ...] showing which areas of the codebase were modified
-
-            Commits between ${from} and ${to}:
-            ${commits.join("\n")}
-
-            Group the changes into these categories based on the [areas: ...] tags (omit any category with no changes):
-            - **TUI**: Changes to "opencode" area (the terminal/CLI interface)
-            - **Desktop**: Changes to "app" or "tauri" areas (the desktop application)
-            - **SDK**: Changes to "sdk" or "plugin" areas (the SDK and plugin system)
-            - **Extensions**: Changes to "extensions/zed", "extensions/vscode", or "github" areas (editor extensions and GitHub Action)
-            - **Other**: Any user-facing changes that don't fit the above categories
-
-            Excluded areas (omit these entirely unless they contain user-facing changes like refactors that may affect behavior):
-            - "nix", "infra", "script" - CI/build infrastructure
-            - "ui", "docs", "web", "console", "enterprise", "function", "util", "identity", "slack" - internal packages
-
-            Rules:
-            - Use the [areas: ...] tags to determine the correct category. If a commit touches multiple areas, put it in the most relevant user-facing category.
-            - ONLY include commits that have user-facing impact. Omit purely internal changes (CI, build scripts, internal tooling).
-            - However, DO include refactors that touch user-facing code - refactors can introduce bugs or change behavior.
-            - Do NOT make general statements about "improvements", be very specific about what was changed.
-            - For commits that are already well-written and descriptive, avoid rewording them. Simply capitalize the first letter, fix any misspellings, and ensure proper English grammar.
-            - DO NOT read any other commits than the ones listed above (THIS IS IMPORTANT TO AVOID DUPLICATING THINGS IN OUR CHANGELOG).
-            - If a commit was made and then reverted do not include it in the changelog. If the commits only include a revert but not the original commit, then include the revert in the changelog.
-            - Omit categories that have no changes.
-            - For community contributors: if the [author: username] is NOT in the team list, add (@username) at the end of the changelog entry. This is REQUIRED for all non-team contributors.
-            - The team members are: ${team.join(", ")}. Do NOT add @ mentions for team members.
-
-            IMPORTANT: ONLY return the grouped changelog, do not include any other information. Do not include a preamble like "Based on my analysis..." or "Here is the changelog..."
-
-            <example>
-            ## TUI
-            - Added experimental support for the Ty language server (@OpeOginni)
-            - Added /fork slash command for keyboard-friendly session forking (@ariane-emory)
-            - Increased retry attempts for failed requests
-            - Fixed model validation before executing slash commands (@devxoul)
-
-            ## Desktop
-            - Added shell mode support
-            - Fixed prompt history navigation and optimistic prompt duplication
-            - Disabled pinch-to-zoom on Linux (@Brendonovich)
-
-            ## Extensions
-            - Added OIDC_BASE_URL support for custom GitHub App installations (@elithrar)
-            </example>
-          `,
+Commit: ${message}`,
           },
         ],
       },
+      signal: AbortSignal.timeout(120_000),
     })
-    .then((x) => x.data?.parts?.find((y) => y.type === "text")?.text)
-  opencode.server.close()
-  return raw
+    .then((x) => x.data?.parts?.find((y) => y.type === "text")?.text ?? message)
+  return result.trim()
+}
+
+export async function generateChangelog(commits: Commit[], opencode: Awaited<ReturnType<typeof createOpencode>>) {
+  const session = await opencode.client.session.create()
+
+  const grouped = new Map<string, string[]>()
+
+  for (const commit of commits) {
+    const section = getSection(commit.areas)
+    const summary = await summarizeCommit(opencode, session.data!.id, commit.message)
+    const attribution = commit.author && !team.includes(commit.author) ? ` (@${commit.author})` : ""
+    const entry = `- ${summary}${attribution}`
+
+    if (!grouped.has(section)) grouped.set(section, [])
+    grouped.get(section)!.push(entry)
+  }
+
+  const sectionOrder = ["Core", "TUI", "Desktop", "SDK", "Extensions"]
+  const lines: string[] = []
+  for (const section of sectionOrder) {
+    const entries = grouped.get(section)
+    if (!entries || entries.length === 0) continue
+    lines.push(`## ${section}`)
+    lines.push(...entries)
+  }
+
+  return lines
 }
 
 export async function getContributors(from: string, to: string) {
@@ -134,31 +184,35 @@ export async function getContributors(from: string, to: string) {
 }
 
 export async function buildNotes(from: string, to: string) {
-  const notes: string[] = []
   const commits = await getCommits(from, to)
 
   if (commits.length === 0) {
-    return notes
+    return []
   }
 
-  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 120_000))
-  const raw = await Promise.race([generateChangelog(from, to, commits), timeout])
+  console.log("generating changelog since " + from)
 
-  if (raw) {
-    for (const line of raw.split("\n")) {
-      if (line.startsWith("- ")) {
-        notes.push(line)
-      }
-    }
+  const opencode = await createOpencode()
+  const notes: string[] = []
+
+  try {
+    const lines = await generateChangelog(commits, opencode)
+    notes.push(...lines)
     console.log("---- Generated Changelog ----")
     console.log(notes.join("\n"))
     console.log("-----------------------------")
-  } else {
-    console.log("Changelog generation timed out, using raw commits")
-    for (const commit of commits) {
-      const message = commit.replace(/^\w+ /, "")
-      notes.push(`- ${message}`)
+  } catch (error) {
+    if (error instanceof Error && error.name === "TimeoutError") {
+      console.log("Changelog generation timed out, using raw commits")
+      for (const commit of commits) {
+        const attribution = commit.author && !team.includes(commit.author) ? ` (@${commit.author})` : ""
+        notes.push(`- ${commit.message}${attribution}`)
+      }
+    } else {
+      throw error
     }
+  } finally {
+    opencode.server.close()
   }
 
   const contributors = await getContributors(from, to)
@@ -168,8 +222,8 @@ export async function buildNotes(from: string, to: string) {
     notes.push(`**Thank you to ${contributors.size} community contributor${contributors.size > 1 ? "s" : ""}:**`)
     for (const [username, userCommits] of contributors) {
       notes.push(`- @${username}:`)
-      for (const commit of userCommits) {
-        notes.push(`  - ${commit}`)
+      for (const c of userCommits) {
+        notes.push(`  - ${c}`)
       }
     }
   }
