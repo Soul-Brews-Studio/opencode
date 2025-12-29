@@ -243,6 +243,116 @@ export namespace ProviderTransform {
     return undefined
   }
 
+  export function thinking(model: Provider.Model, thinking: MessageV2.Thinking): Record<string, any> {
+    if (!model.capabilities.reasoning || thinking.effort === "default") return {}
+
+    switch (model.api.npm) {
+      case "@openrouter/ai-sdk-provider":
+        return {
+          reasoning: { effort: thinking.effort },
+        }
+
+      // TODO: YOU CANNOT SET max_tokens if this is set!!!
+      case "@ai-sdk/gateway":
+        return {
+          reasoningEffort: thinking.effort,
+        }
+
+      case "@ai-sdk/cerebras":
+      // https://v5.ai-sdk.dev/providers/ai-sdk-providers/cerebras
+      case "@ai-sdk/togetherai":
+      // https://v5.ai-sdk.dev/providers/ai-sdk-providers/togetherai
+      case "@ai-sdk/xai":
+      // https://v5.ai-sdk.dev/providers/ai-sdk-providers/xai
+      case "@ai-sdk/deepinfra":
+      // https://v5.ai-sdk.dev/providers/ai-sdk-providers/deepinfra
+      case "@ai-sdk/openai-compatible":
+        const result: Record<string, any> = {
+          reasoningEffort: thinking.effort,
+        }
+
+        if (model.providerID === "baseten") {
+          result["chat_template_args"] = { enable_thinking: true }
+        }
+
+        return result
+
+      case "@ai-sdk/azure":
+      // https://v5.ai-sdk.dev/providers/ai-sdk-providers/azure
+      case "@ai-sdk/openai":
+        return {
+          reasoningEffort: thinking.effort,
+          reasoningSummary: "auto",
+          include: ["reasoning.encrypted_content"],
+        }
+
+      case "@ai-sdk/anthropic":
+        return {
+          thinking: {
+            type: "enabled",
+            budgetTokens: thinking.effort === "medium" ? 16000 : 31999,
+          },
+        }
+
+      case "@ai-sdk/amazon-bedrock":
+        // https://v5.ai-sdk.dev/providers/ai-sdk-providers/amazon-bedrock
+        return {
+          reasoningConfig: {
+            type: "enabled",
+            maxReasoningEffort: thinking.effort,
+          },
+        }
+
+      case "@ai-sdk/google-vertex":
+      // https://v5.ai-sdk.dev/providers/ai-sdk-providers/google-vertex
+      case "@ai-sdk/google":
+        // https://v5.ai-sdk.dev/providers/ai-sdk-providers/google-generative-ai
+        if (model.id.includes("2.5")) {
+          return {
+            thinkingConfig: {
+              includeThoughts: true,
+              thinkingBudget: thinking.effort === "medium" ? 8192 : 24576,
+            },
+          }
+        }
+        return {
+          thinkingConfig: {
+            includeThoughts: true,
+            thinkingLevel: thinking.effort,
+          },
+        }
+
+      case "@ai-sdk/mistral":
+        // TODO: implement mistral thinking options
+        // https://v5.ai-sdk.dev/providers/ai-sdk-providers/mistral
+        return {}
+
+      case "@ai-sdk/cohere":
+        // https://v5.ai-sdk.dev/providers/ai-sdk-providers/cohere
+        const res: Record<string, any> = {
+          thinking: {
+            type: "enabled",
+          },
+        }
+        if (thinking.effort === "medium") {
+          res["thinking"]["budgetTokens"] = 8192
+        }
+        return res
+
+      case "@ai-sdk/groq":
+        // https://v5.ai-sdk.dev/providers/ai-sdk-providers/groq
+        return {
+          reasoningFormat: "parsed",
+          reasoningEffort: thinking.effort,
+        }
+
+      case "@ai-sdk/perplexity":
+        // https://v5.ai-sdk.dev/providers/ai-sdk-providers/perplexity
+        return {}
+    }
+    return {}
+  }
+
   export function options(
     model: Provider.Model,
     sessionID: string,
@@ -255,7 +365,7 @@ export namespace ProviderTransform {
         include: true,
       }
       if (model.api.id.includes("gemini-3")) {
-        result["reasoning"] = { effort: "high" }
+        // result["reasoning"] = { effort: "high" }
       }
     }
 
@@ -275,7 +385,7 @@ export namespace ProviderTransform {
         includeThoughts: true,
       }
       if (model.api.id.includes("gemini-3")) {
-        result["thinkingConfig"]["thinkingLevel"] = "high"
+        // result["thinkingConfig"]["thinkingLevel"] = "high"
       }
     }
 
@@ -285,7 +395,7 @@ export namespace ProviderTransform {
       }
 
       if (!model.api.id.includes("codex") && !model.api.id.includes("gpt-5-pro")) {
-        result["reasoningEffort"] = "medium"
+        // result["reasoningEffort"] = "medium"
       }
 
       if (model.api.id.endsWith("gpt-5.") && model.providerID !== "azure") {
@@ -322,6 +432,7 @@ export namespace ProviderTransform {
 
   export function providerOptions(model: Provider.Model, options: { [x: string]: any }) {
     switch (model.api.npm) {
+      case "@ai-sdk/github-copilot":
       case "@ai-sdk/openai":
       case "@ai-sdk/azure":
         return {
@@ -335,6 +446,7 @@ export namespace ProviderTransform {
         return {
           ["anthropic" as string]: options,
         }
+      case "@ai-sdk/google-vertex":
       case "@ai-sdk/google":
         return {
           ["google" as string]: options,
