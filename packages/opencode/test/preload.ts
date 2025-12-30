@@ -17,21 +17,6 @@ const testHome = path.join(dir, "home")
 await fs.mkdir(testHome, { recursive: true })
 process.env["OPENCODE_TEST_HOME"] = testHome
 
-// Create a global skill in ~/.claude/skills/ for testing
-const globalSkillDir = path.join(testHome, ".claude", "skills", "global-test-skill")
-await fs.mkdir(globalSkillDir, { recursive: true })
-await fs.writeFile(
-  path.join(globalSkillDir, "SKILL.md"),
-  `---
-name: global-test-skill
-description: A global skill from ~/.claude/skills for testing.
----
-
-# Global Test Skill
-
-This skill is loaded from the global home directory.
-`,
-)
 process.env["XDG_DATA_HOME"] = path.join(dir, "share")
 process.env["XDG_CACHE_HOME"] = path.join(dir, "cache")
 process.env["XDG_CONFIG_HOME"] = path.join(dir, "config")

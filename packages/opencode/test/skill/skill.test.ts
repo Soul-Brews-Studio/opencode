@@ -1,9 +1,26 @@
 import { test, expect } from "bun:test"
 import { Skill } from "../../src/skill"
-import { SystemPrompt } from "../../src/session/system"
 import { Instance } from "../../src/project/instance"
 import { tmpdir } from "../fixture/fixture"
 import path from "path"
+import fs from "fs/promises"
+
+async function createGlobalSkill(homeDir: string) {
+  const skillDir = path.join(homeDir, ".claude", "skills", "global-test-skill")
+  await fs.mkdir(skillDir, { recursive: true })
+  await Bun.write(
+    path.join(skillDir, "SKILL.md"),
+    `---
+name: global-test-skill
+description: A global skill from ~/.claude/skills for testing.
+---
+
+# Global Test Skill
+
+This skill is loaded from the global home directory.
+`,
+  )
+}
 
 test("discovers skills from .opencode/skill/ directory", async () => {
   await using tmp = await tmpdir({
@@ -29,8 +46,7 @@ Instructions here.
     directory: tmp.path,
     fn: async () => {
       const skills = await Skill.all()
-      // Should find local skill + global skill from test home
-      expect(skills.length).toBe(2)
+      expect(skills.length).toBe(1)
       const testSkill = skills.find((s) => s.name === "test-skill")
       expect(testSkill).toBeDefined()
       expect(testSkill!.description).toBe("A test skill for verification.")
@@ -43,15 +59,26 @@ test("discovers multiple skills from .opencode/skill/ directory", async () => {
   await using tmp = await tmpdir({
     git: true,
     init: async (dir) => {
-      const skillDir = path.join(dir, ".opencode", "skill", "my-skill")
+      const skillDir1 = path.join(dir, ".opencode", "skill", "skill-one")
+      const skillDir2 = path.join(dir, ".opencode", "skill", "skill-two")
       await Bun.write(
-        path.join(skillDir, "SKILL.md"),
+        path.join(skillDir1, "SKILL.md"),
         `---
-name: my-skill
-description: Another test skill.
+name: skill-one
+description: First test skill.
 ---
 
-# My Skill
+# Skill One
+`,
+      )
+      await Bun.write(
+        path.join(skillDir2, "SKILL.md"),
+        `---
+name: skill-two
+description: Second test skill.
+---
+
+# Skill Two
 `,
       )
     },
@@ -61,10 +88,9 @@ description: Another test skill.
     directory: tmp.path,
     fn: async () => {
       const skills = await Skill.all()
-      // Should find local skill + global skill from test home
       expect(skills.length).toBe(2)
-      const mySkill = skills.find((s) => s.name === "my-skill")
-      expect(mySkill).toBeDefined()
+      expect(skills.find((s) => s.name === "skill-one")).toBeDefined()
+      expect(skills.find((s) => s.name === "skill-two")).toBeDefined()
     },
   })
 })
@@ -88,9 +114,7 @@ Just some content without YAML frontmatter.
     directory: tmp.path,
     fn: async () => {
       const skills = await Skill.all()
-      // Should only find the global skill, not the one without frontmatter
-      expect(skills.length).toBe(1)
-      expect(skills[0].name).toBe("global-test-skill")
+      expect(skills).toEqual([])
     },
   })
 })
@@ -117,50 +141,45 @@ description: A skill in the .claude/skills directory.
     directory: tmp.path,
     fn: async () => {
       const skills = await Skill.all()
-      // Should find both project-local and global skill
-      expect(skills.length).toBe(2)
+      expect(skills.length).toBe(1)
       const claudeSkill = skills.find((s) => s.name === "claude-skill")
-      const globalSkill = skills.find((s) => s.name === "global-test-skill")
       expect(claudeSkill).toBeDefined()
       expect(claudeSkill!.location).toContain(".claude/skills/claude-skill/SKILL.md")
-      expect(globalSkill).toBeDefined()
-      expect(globalSkill!.description).toBe("A global skill from ~/.claude/skills for testing.")
     },
   })
 })
 
 test("discovers global skills from ~/.claude/skills/ directory", async () => {
-  // Create a project with no local skills - should still find global skill
+  await using tmp = await tmpdir({ git: true })
+
+  const originalHome = process.env.OPENCODE_TEST_HOME
+  process.env.OPENCODE_TEST_HOME = tmp.path
+
+  try {
+    await createGlobalSkill(tmp.path)
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const skills = await Skill.all()
+        expect(skills.length).toBe(1)
+        expect(skills[0].name).toBe("global-test-skill")
+        expect(skills[0].description).toBe("A global skill from ~/.claude/skills for testing.")
+        expect(skills[0].location).toContain(".claude/skills/global-test-skill/SKILL.md")
+      },
+    })
+  } finally {
+    process.env.OPENCODE_TEST_HOME = originalHome
+  }
+})
+
+test("returns empty array when no skills exist", async () => {
   await using tmp = await tmpdir({ git: true })
 
   await Instance.provide({
     directory: tmp.path,
     fn: async () => {
       const skills = await Skill.all()
-      expect(skills.length).toBe(1)
-      expect(skills[0].name).toBe("global-test-skill")
-      expect(skills[0].description).toBe("A global skill from ~/.claude/skills for testing.")
-      expect(skills[0].location).toContain(".claude/skills/global-test-skill/SKILL.md")
+      expect(skills).toEqual([])
     },
   })
-})
-
-test("returns empty array when no skills exist", async () => {
-  await using tmp = await tmpdir({ git: true })
-
-  // Override global home to a directory without any skills
-  const originalHome = process.env.OPENCODE_TEST_HOME
-  process.env.OPENCODE_TEST_HOME = tmp.path
-
-  try {
-    await Instance.provide({
-      directory: tmp.path,
-      fn: async () => {
-        const skills = await Skill.all()
-        expect(skills).toEqual([])
-      },
-    })
-  } finally {
-    process.env.OPENCODE_TEST_HOME = originalHome
-  }
 })
