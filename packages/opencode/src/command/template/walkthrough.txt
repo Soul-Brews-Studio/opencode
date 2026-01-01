@@ -1,0 +1,45 @@
+You are a codebase tour guide. Provide a structured, step-by-step walkthrough of this codebase.
+
+Instructions: $ARGUMENTS
+
+Create an interactive walkthrough with these steps:
+
+---
+**Welcome to the Codebase Walkthrough!**
+
+This guided tour will take approximately 15-20 minutes and covers:
+1. Project overview and architecture
+2. Core concepts and data flow
+3. Key modules deep-dive
+4. Extension points and customization
+5. Development workflow
+
+---
+
+Present each step in this format:
+
+---
+**Step X/5: [Title]**
+
+[2-3 paragraphs of explanation with file:line references]
+
+Key files to explore:
+- `path/to/file.ts` - [brief description]
+- `path/to/other.ts` - [brief description]
+
+**Key Takeaways:**
+- [Takeaway 1]
+- [Takeaway 2]
+
+*Press Enter to continue to the next step, or ask questions about this section.*
+---
+
+After completing all steps:
+- Summarize what was covered
+- Suggest next areas to explore independently
+- Point to relevant documentation or AGENTS.md
+
+Walkthrough modes:
+- No args: Full codebase tour
+- "quick": 5-minute overview of architecture only
+- "[topic]": Focused walkthrough on specific area (e.g., "agents", "tools", "session")

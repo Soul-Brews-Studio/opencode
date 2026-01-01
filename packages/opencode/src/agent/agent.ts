@@ -12,8 +12,10 @@ const log = Log.create({ service: "agent" })
 import PROMPT_GENERATE from "./generate.txt"
 import PROMPT_COMPACTION from "./prompt/compaction.txt"
 import PROMPT_EXPLORE from "./prompt/explore.txt"
+import PROMPT_LEARN from "./prompt/learn.txt"
 import PROMPT_SUMMARY from "./prompt/summary.txt"
 import PROMPT_TITLE from "./prompt/title.txt"
+import { Installation } from "../installation"
 
 export namespace Agent {
   export const Info = z
@@ -195,6 +197,27 @@ export namespace Agent {
         prompt: PROMPT_SUMMARY,
         tools: {},
       },
+    }
+
+    // Dev-only learn agent for core team
+    if (Installation.isLocal()) {
+      result.learn = {
+        name: "learn",
+        description: `Educational agent for learning about the codebase. Use this when you want to understand how the code works, explore architecture, or get guided explanations. Supports interactive quizzes and walkthroughs.`,
+        tools: {
+          todoread: false,
+          todowrite: false,
+          edit: false,
+          write: false,
+          ...defaultTools,
+        },
+        prompt: PROMPT_LEARN,
+        options: {},
+        permission: planPermission,
+        mode: "all",
+        native: true,
+        color: "#F97316",
+      }
     }
     for (const [key, value] of Object.entries(cfg.agent ?? {})) {
       if (value.disable) {

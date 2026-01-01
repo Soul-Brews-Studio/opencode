@@ -1,0 +1,16 @@
+Generate a 5-question multiple-choice quiz about this codebase.
+
+Format each question as:
+
+**Question X/5**
+
+[Question]
+
+A) [Option]
+B) [Option]
+C) [Option]
+D) [Option]
+
+After each answer, indicate correct/incorrect with a brief explanation and file:line reference.
+
+End with a score summary (X/5).

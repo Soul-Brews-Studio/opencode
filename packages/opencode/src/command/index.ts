@@ -4,8 +4,13 @@ import z from "zod"
 import { Config } from "../config/config"
 import { Instance } from "../project/instance"
 import { Identifier } from "../id/id"
+import { Installation } from "../installation"
 import PROMPT_INITIALIZE from "./template/initialize.txt"
 import PROMPT_REVIEW from "./template/review.txt"
+import PROMPT_LEARN from "./template/learn.txt"
+import PROMPT_QUIZ from "./template/quiz.txt"
+import PROMPT_WALKTHROUGH from "./template/walkthrough.txt"
+import PROMPT_EXPLAIN from "./template/explain.txt"
 
 export namespace Command {
   export const Event = {
@@ -37,6 +42,11 @@ export namespace Command {
   export const Default = {
     INIT: "init",
     REVIEW: "review",
+    // Dev-only learning commands
+    LEARN: "learn",
+    QUIZ: "quiz",
+    WALKTHROUGH: "walkthrough",
+    EXPLAIN: "explain",
   } as const
 
   const state = Instance.state(async () => {
@@ -54,6 +64,34 @@ export namespace Command {
         template: PROMPT_REVIEW.replace("${path}", Instance.worktree),
         subtask: true,
       },
+    }
+
+    // Dev-only learning commands for core team
+    if (Installation.isLocal()) {
+      result[Default.LEARN] = {
+        name: Default.LEARN,
+        description: "learn about the codebase",
+        template: PROMPT_LEARN,
+        agent: "learn",
+      }
+      result[Default.QUIZ] = {
+        name: Default.QUIZ,
+        description: "test your codebase knowledge",
+        template: PROMPT_QUIZ,
+        agent: "learn",
+      }
+      result[Default.WALKTHROUGH] = {
+        name: Default.WALKTHROUGH,
+        description: "guided tour of the codebase [topic]",
+        template: PROMPT_WALKTHROUGH,
+        agent: "learn",
+      }
+      result[Default.EXPLAIN] = {
+        name: Default.EXPLAIN,
+        description: "explain a file or module [@file|topic]",
+        template: PROMPT_EXPLAIN,
+        agent: "learn",
+      }
     }
 
     for (const [name, command] of Object.entries(cfg.command ?? {})) {

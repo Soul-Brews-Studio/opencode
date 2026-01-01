@@ -307,11 +307,18 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
           })
         },
         variant: {
+          EFFORT_LABELS: {
+            low: "⠄low",
+            high: "⡄high",
+            max: "⡆max",
+          } as Record<string, string>,
           current() {
             const m = currentModel()
             if (!m) return undefined
             const key = `${m.providerID}/${m.modelID}`
-            return modelStore.variant[key]
+            const value = modelStore.variant[key]
+            if (!value) return undefined
+            return this.EFFORT_LABELS[value] ?? value
           },
           list() {
             const m = currentModel()
@@ -321,13 +328,15 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
             if (!info?.variants) return []
             return Object.entries(info.variants)
               .filter(([_, v]) => !v.disabled)
-              .map(([name]) => name)
+              .map(([name]) => this.EFFORT_LABELS[name] ?? name)
           },
           set(value: string | undefined) {
             const m = currentModel()
             if (!m) return
             const key = `${m.providerID}/${m.modelID}`
-            setModelStore("variant", key, value)
+            // Strip braille prefix when storing
+            const stripped = value?.replace(/^[⠄⡄⡆]/, "")
+            setModelStore("variant", key, stripped)
             save()
           },
           cycle() {

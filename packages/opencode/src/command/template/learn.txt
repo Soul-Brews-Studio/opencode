@@ -1,0 +1,8 @@
+Help the developer learn about this codebase. Provide a clear orientation covering:
+
+1. What this project does
+2. High-level architecture and key directories
+3. Core concepts and how they relate
+4. Where to find specific functionality
+
+Always cite file:line locations.
