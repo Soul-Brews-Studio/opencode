@@ -384,7 +384,7 @@ You can also use wildcards to control multiple tools at once. For example, to di
 
 ### Permissions
 
-You can configure permissions to manage what actions an agent can take. Currently, the permissions for the `edit`, `bash`, and `webfetch` tools can be configured to:
+You can configure permissions to manage what actions an agent can take. Most built-in tools support permissions (for example, `edit`, `bash`, `read`, `webfetch`, `glob`, `grep`, `task`, etc.), plus special gates like `external_directory` and `doom_loop`.
 
 - `"ask"` — Prompt for approval before running the tool
 - `"allow"` — Allow all operations without approval

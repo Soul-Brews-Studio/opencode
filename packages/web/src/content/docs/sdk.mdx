@@ -226,27 +226,36 @@ const { providers, default: defaults } = await client.config.providers()
 
 ### Sessions
 
-| Method                                                     | Description                        | Notes                                                                                                                                          |
-| ---------------------------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session.list()`                                           | List sessions                      | Returns <a href={typesUrl}><code>Session[]</code></a>                                                                                          |
-| `session.get({ path })`                                    | Get session                        | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
-| `session.children({ path })`                               | List child sessions                | Returns <a href={typesUrl}><code>Session[]</code></a>                                                                                          |
-| `session.create({ body })`                                 | Create session                     | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
-| `session.delete({ path })`                                 | Delete session                     | Returns `boolean`                                                                                                                              |
-| `session.update({ path, body })`                           | Update session properties          | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
-| `session.init({ path, body })`                             | Analyze app and create `AGENTS.md` | Returns `boolean`                                                                                                                              |
-| `session.abort({ path })`                                  | Abort a running session            | Returns `boolean`                                                                                                                              |
-| `session.share({ path })`                                  | Share session                      | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
-| `session.unshare({ path })`                                | Unshare session                    | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
-| `session.summarize({ path, body })`                        | Summarize session                  | Returns `boolean`                                                                                                                              |
-| `session.messages({ path })`                               | List messages in a session         | Returns `{ info: `<a href={typesUrl}><code>Message</code></a>`, parts: `<a href={typesUrl}><code>Part[]</code></a>`}[]`                        |
-| `session.message({ path })`                                | Get message details                | Returns `{ info: `<a href={typesUrl}><code>Message</code></a>`, parts: `<a href={typesUrl}><code>Part[]</code></a>`}`                          |
-| `session.prompt({ path, body })`                           | Send prompt message                | `body.noReply: true` returns UserMessage (context only). Default returns <a href={typesUrl}><code>AssistantMessage</code></a> with AI response |
-| `session.command({ path, body })`                          | Send command to session            | Returns `{ info: `<a href={typesUrl}><code>AssistantMessage</code></a>`, parts: `<a href={typesUrl}><code>Part[]</code></a>`}`                 |
-| `session.shell({ path, body })`                            | Run a shell command                | Returns <a href={typesUrl}><code>AssistantMessage</code></a>                                                                                   |
-| `session.revert({ path, body })`                           | Revert a message                   | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
-| `session.unrevert({ path })`                               | Restore reverted messages          | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
-| `postSessionByIdPermissionsByPermissionId({ path, body })` | Respond to a permission request    | Returns `boolean`                                                                                                                              |
+| Method                              | Description                        | Notes                                                                                                                                          |
+| ----------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session.list()`                    | List sessions                      | Returns <a href={typesUrl}><code>Session[]</code></a>                                                                                          |
+| `session.get({ path })`             | Get session                        | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
+| `session.children({ path })`        | List child sessions                | Returns <a href={typesUrl}><code>Session[]</code></a>                                                                                          |
+| `session.create({ body })`          | Create session                     | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
+| `session.delete({ path })`          | Delete session                     | Returns `boolean`                                                                                                                              |
+| `session.update({ path, body })`    | Update session properties          | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
+| `session.init({ path, body })`      | Analyze app and create `AGENTS.md` | Returns `boolean`                                                                                                                              |
+| `session.abort({ path })`           | Abort a running session            | Returns `boolean`                                                                                                                              |
+| `session.share({ path })`           | Share session                      | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
+| `session.unshare({ path })`         | Unshare session                    | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
+| `session.summarize({ path, body })` | Summarize session                  | Returns `boolean`                                                                                                                              |
+| `session.messages({ path })`        | List messages in a session         | Returns `{ info: `<a href={typesUrl}><code>Message</code></a>`, parts: `<a href={typesUrl}><code>Part[]</code></a>`}[]`                        |
+| `session.message({ path })`         | Get message details                | Returns `{ info: `<a href={typesUrl}><code>Message</code></a>`, parts: `<a href={typesUrl}><code>Part[]</code></a>`}`                          |
+| `session.prompt({ path, body })`    | Send prompt message                | `body.noReply: true` returns UserMessage (context only). Default returns <a href={typesUrl}><code>AssistantMessage</code></a> with AI response |
+| `session.command({ path, body })`   | Send command to session            | Returns `{ info: `<a href={typesUrl}><code>AssistantMessage</code></a>`, parts: `<a href={typesUrl}><code>Part[]</code></a>`}`                 |
+| `session.shell({ path, body })`     | Run a shell command                | Returns <a href={typesUrl}><code>AssistantMessage</code></a>                                                                                   |
+| `session.revert({ path, body })`    | Revert a message                   | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
+| `session.unrevert({ path })`        | Restore reverted messages          | Returns <a href={typesUrl}><code>Session</code></a>                                                                                            |
+
+---
+
+### Permissions
+
+| Method                                                      | Description                     | Notes                                                              |
+| ----------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------ |
+| `permission.list()`                                         | List pending permissions        | Returns <a href={typesUrl}><code>PermissionRequest[]</code></a>    |
+| `permission.reply({ requestID, reply })`                    | Respond to a permission request | `reply` is `"once"`, `"always"`, or `"reject"` (returns `boolean`) |
+| `permission.respond({ sessionID, permissionID, response })` | Respond to a permission request | Deprecated alias (returns `boolean`)                               |
 
 ---
 
