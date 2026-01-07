@@ -2,7 +2,6 @@ import fs from "fs/promises"
 import path from "path"
 import { Global } from "../global"
 import { Identifier } from "../id/id"
-import { iife } from "../util/iife"
 import { lazy } from "../util/lazy"
 import { PermissionNext } from "../permission/next"
 import type { Agent } from "../agent/agent"
@@ -25,20 +24,17 @@ export namespace Truncate {
     direction?: "head" | "tail"
   }
 
-  const init = lazy(async () => {
-    const cutoff = Date.now() - RETENTION_MS
-    const entries = await fs.readdir(DIR).catch(() => [] as string[])
+  export async function cleanup() {
+    const cutoff = Identifier.timestamp(Identifier.create("tool", false, Date.now() - RETENTION_MS))
+    const glob = new Bun.Glob("tool_*")
+    const entries = await Array.fromAsync(glob.scan({ cwd: DIR, onlyFiles: true })).catch(() => [] as string[])
     for (const entry of entries) {
-      if (!entry.startsWith("tool_")) continue
-      const timestamp = iife(() => {
-        const hex = entry.slice(5, 17)
-        const now = BigInt("0x" + hex)
-        return Number(now / BigInt(0x1000))
-      })
-      if (timestamp >= cutoff) continue
-      await fs.rm(path.join(DIR, entry), { force: true }).catch(() => {})
+      if (Identifier.timestamp(entry) >= cutoff) continue
+      await fs.unlink(path.join(DIR, entry)).catch(() => {})
     }
-  })
+  }
+
+  const init = lazy(cleanup)
 
   function hasTaskTool(agent?: Agent.Info): boolean {
     if (!agent?.permission) return false

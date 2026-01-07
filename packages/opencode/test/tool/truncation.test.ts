@@ -1,5 +1,7 @@
-import { describe, test, expect } from "bun:test"
+import { describe, test, expect, afterAll } from "bun:test"
 import { Truncate } from "../../src/tool/truncation"
+import { Identifier } from "../../src/id/id"
+import fs from "fs/promises"
 import path from "path"
 
 const FIXTURES_DIR = path.join(import.meta.dir, "fixtures")
@@ -115,6 +117,41 @@ describe("Truncate", () => {
 
       expect(result.truncated).toBe(false)
       expect(result.outputPath).toBeUndefined()
+    })
+  })
+
+  describe("cleanup", () => {
+    const DAY_MS = 24 * 60 * 60 * 1000
+    let oldFile: string
+    let recentFile: string
+
+    afterAll(async () => {
+      await fs.unlink(oldFile).catch(() => {})
+      await fs.unlink(recentFile).catch(() => {})
+    })
+
+    test("deletes files older than 7 days and preserves recent files", async () => {
+      await fs.mkdir(Truncate.DIR, { recursive: true })
+
+      // Create an old file (10 days ago)
+      const oldTimestamp = Date.now() - 10 * DAY_MS
+      const oldId = Identifier.create("tool", false, oldTimestamp)
+      oldFile = path.join(Truncate.DIR, oldId)
+      await Bun.write(Bun.file(oldFile), "old content")
+
+      // Create a recent file (3 days ago)
+      const recentTimestamp = Date.now() - 3 * DAY_MS
+      const recentId = Identifier.create("tool", false, recentTimestamp)
+      recentFile = path.join(Truncate.DIR, recentId)
+      await Bun.write(Bun.file(recentFile), "recent content")
+
+      await Truncate.cleanup()
+
+      // Old file should be deleted
+      expect(await Bun.file(oldFile).exists()).toBe(false)
+
+      // Recent file should still exist
+      expect(await Bun.file(recentFile).exists()).toBe(true)
     })
   })
 })
