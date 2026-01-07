@@ -23,7 +23,7 @@ import { CodeSearchTool } from "./codesearch"
 import { Flag } from "@/flag/flag"
 import { Log } from "@/util/log"
 import { LspTool } from "./lsp"
-import { Truncate } from "../session/truncation"
+import { Truncate } from "./truncation"
 
 export namespace ToolRegistry {
   const log = Log.create({ service: "tool.registry" })

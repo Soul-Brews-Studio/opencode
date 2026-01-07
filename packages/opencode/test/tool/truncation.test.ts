@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test"
-import { Truncate } from "../../src/session/truncation"
+import { Truncate } from "../../src/tool/truncation"
 import path from "path"
 
 const FIXTURES_DIR = path.join(import.meta.dir, "fixtures")

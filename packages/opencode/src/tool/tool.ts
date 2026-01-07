@@ -2,7 +2,7 @@ import z from "zod"
 import type { MessageV2 } from "../session/message-v2"
 import type { Agent } from "../agent/agent"
 import type { PermissionNext } from "../permission/next"
-import { Truncate } from "../session/truncation"
+import { Truncate } from "./truncation"
 
 export namespace Tool {
   interface Metadata {
@@ -66,6 +66,10 @@ export namespace Tool {
             )
           }
           const result = await execute(args, ctx)
+          // skip truncation for tools that handle it themselves
+          if (result.metadata.truncated !== undefined) {
+            return result
+          }
           const truncated = await Truncate.output(result.output, {}, initCtx?.agent)
           return {
             ...result,
