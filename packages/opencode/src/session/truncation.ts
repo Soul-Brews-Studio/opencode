@@ -4,7 +4,10 @@ import { Global } from "../global"
 import { Identifier } from "../id/id"
 import { iife } from "../util/iife"
 import { lazy } from "../util/lazy"
+import { PermissionNext } from "../permission/next"
+import type { Agent } from "../agent/agent"
 
+// what models does opencode provider support? Read: https://models.dev/api.json
 export namespace Truncate {
   export const MAX_LINES = 2000
   export const MAX_BYTES = 50 * 1024
@@ -38,7 +41,13 @@ export namespace Truncate {
     }
   })
 
-  export async function output(text: string, options: Options = {}): Promise<Result> {
+  function hasTaskTool(agent?: Agent.Info): boolean {
+    if (!agent?.permission) return false
+    const rule = PermissionNext.evaluate("task", "*", agent.permission)
+    return rule.action !== "deny"
+  }
+
+  export async function output(text: string, options: Options = {}, agent?: Agent.Info): Promise<Result> {
     const maxLines = options.maxLines ?? MAX_LINES
     const maxBytes = options.maxBytes ?? MAX_BYTES
     const direction = options.direction ?? "head"
@@ -85,10 +94,12 @@ export namespace Truncate {
     const filepath = path.join(DIR, id)
     await Bun.write(Bun.file(filepath), text)
 
+    const base = `Full output written to: ${filepath}\nUse Grep to search the full content and Read with offset/limit to read specific sections`
+    const hint = hasTaskTool(agent) ? `${base} (or use Task tool to delegate and save context).` : `${base}.`
     const message =
       direction === "head"
-        ? `${preview}\n\n...${removed} ${unit} truncated...\n\nFull output written to: ${filepath}\nUse Read or Grep to view the full content.`
-        : `...${removed} ${unit} truncated...\n\nFull output written to: ${filepath}\nUse Read or Grep to view the full content.\n\n${preview}`
+        ? `${preview}\n\n...${removed} ${unit} truncated...\n\n${hint}`
+        : `...${removed} ${unit} truncated...\n\n${hint}\n\n${preview}`
 
     return { content: message, truncated: true, outputPath: filepath }
   }

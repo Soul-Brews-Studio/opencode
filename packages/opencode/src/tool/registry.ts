@@ -60,12 +60,12 @@ export namespace ToolRegistry {
   function fromPlugin(id: string, def: ToolDefinition): Tool.Info {
     return {
       id,
-      init: async () => ({
+      init: async (initCtx) => ({
         parameters: z.object(def.args),
         description: def.description,
         execute: async (args, ctx) => {
           const result = await def.execute(args as any, ctx)
-          const out = await Truncate.output(result)
+          const out = await Truncate.output(result, {}, initCtx?.agent)
           return {
             title: "",
             output: out.truncated ? out.content : result,
