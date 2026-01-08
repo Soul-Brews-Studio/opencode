@@ -255,7 +255,8 @@ pub fn run() {
             {
                 window_builder = window_builder
                     .title_bar_style(tauri::TitleBarStyle::Overlay)
-                    .hidden_title(true);
+                    .hidden_title(true)
+                    .traffic_light_position(tauri::LogicalPosition::new(16.0, 19.5));
             }
 
             let window = window_builder.build().expect("Failed to create window");
