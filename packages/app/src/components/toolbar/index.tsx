@@ -8,7 +8,6 @@ import { usePlatform } from "@/context/platform"
 
 const IS_MAC = typeof navigator === "object" && /(Mac|iPod|iPhone|iPad)/.test(navigator.platform)
 
-// ID for the portal mount target
 export const TOOLBAR_PORTAL_ID = "toolbar-content-portal"
 
 export const Toolbar: Component<ComponentProps<"div">> = ({ class: className, ...props }) => {
@@ -21,7 +20,7 @@ export const Toolbar: Component<ComponentProps<"div">> = ({ class: className, ..
       classList={{
         "pl-[80px]": IS_MAC && platform.platform !== "web",
         "pl-2": !IS_MAC || platform.platform === "web",
-        "py-2 mx-px bg-background-base border-b border-border-weak-base flex items-center justify-between w-full border-box relative": true,
+        "py-2 min-h-[41px] mx-px bg-background-base border-b border-border-weak-base flex items-center justify-between w-full border-box relative": true,
         ...(className ? { [className]: true } : {}),
       }}
       data-tauri-drag-region
@@ -59,21 +58,9 @@ export const Toolbar: Component<ComponentProps<"div">> = ({ class: className, ..
         </Button>
       </TooltipKeybind>
 
-      <Button
-        variant="ghost"
-        size="normal"
-        class="group/sidebar-toggle shrink-0 text-left justify-center align-middle rounded-lg px-1.5 xl:hidden relative z-10"
-        onClick={layout.mobileSidebar.toggle}
-      >
-        <div class="relative -ml-px flex items-center justify-center size-4 [&>*]:absolute [&>*]:inset-0">
-          <Icon name="menu" size="small" />
-        </div>
-      </Button>
-
       <div id={TOOLBAR_PORTAL_ID} class="contents" />
     </div>
   )
 }
 
-// Re-export for use in DirectoryLayout
 export { ToolbarSession } from "./session"

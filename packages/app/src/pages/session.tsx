@@ -40,7 +40,14 @@ import { extractPromptFromParts } from "@/utils/prompt"
 import { ConstrainDragYAxis, getDraggableId } from "@/utils/solid-dnd"
 import { usePermission } from "@/context/permission"
 import { showToast } from "@opencode-ai/ui/toast"
-import { SessionContextTab, SortableTab, FileVisual, SortableTerminalTab, NewSessionView } from "@/components/session"
+import {
+  SessionHeader,
+  SessionContextTab,
+  SortableTab,
+  FileVisual,
+  SortableTerminalTab,
+  NewSessionView,
+} from "@/components/session"
 import { usePlatform } from "@/context/platform"
 import { same } from "@/utils/same"
 
@@ -769,6 +776,7 @@ export default function Page() {
 
   return (
     <div class="relative bg-background-base size-full overflow-hidden flex flex-col">
+      <SessionHeader />
       <div class="flex-1 min-h-0 flex flex-col md:flex-row">
         {/* Mobile tab bar - only shown on mobile when there are diffs */}
         <Show when={!isDesktop() && diffs().length > 0}>
