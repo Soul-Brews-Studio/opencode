@@ -42,3 +42,6 @@ semver = "1.0.27"
 [target.'cfg(target_os = "linux")'.dependencies]
 gtk = "0.18.2"
 webkit2gtk = "=2.0.1"
+
+[patch.crates-io]
+tauri-plugin-updater = { git = "https://github.com/tauri-apps/plugins-workspace", rev = "f3d75f7abb536ba70d1746801096af6d9be7f8b1" }
