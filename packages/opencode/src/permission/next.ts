@@ -2,6 +2,7 @@ import { Bus } from "@/bus"
 import { BusEvent } from "@/bus/bus-event"
 import { Config } from "@/config/config"
 import { Identifier } from "@/id/id"
+import { Plugin } from "@/plugin"
 import { Instance } from "@/project/instance"
 import { Storage } from "@/storage/storage"
 import { fn } from "@/util/fn"
@@ -127,11 +128,20 @@ export namespace PermissionNext {
           throw new DeniedError(ruleset.filter((r) => Wildcard.match(request.permission, r.permission)))
         if (rule.action === "ask") {
           const id = input.id ?? Identifier.ascending("permission")
+          const info: Request = {
+            id,
+            ...request,
+          }
+          const pluginResult = await Plugin.trigger("permission.ask", info, {
+            status: "ask" as "ask" | "allow" | "deny",
+          })
+          if (pluginResult.status === "deny") {
+            throw new RejectedError()
+          }
+          if (pluginResult.status === "allow") {
+            continue
+          }
           return new Promise<void>((resolve, reject) => {
-            const info: Request = {
-              id,
-              ...request,
-            }
             s.pending[id] = {
               info,
               resolve,
