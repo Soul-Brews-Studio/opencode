@@ -1094,7 +1094,16 @@ function UserMessage(props: {
   const ctx = use()
   const local = useLocal()
   const text = createMemo(() => props.parts.flatMap((x) => (x.type === "text" && !x.synthetic ? [x] : []))[0])
-  const files = createMemo(() => props.parts.flatMap((x) => (x.type === "file" ? [x] : [])))
+  const files = createMemo(() => {
+    const seen = new Set<string>()
+    return props.parts.flatMap((x) => {
+      if (x.type !== "file") return []
+      const key = x.filename ?? x.url
+      if (seen.has(key)) return []
+      seen.add(key)
+      return [x]
+    })
+  })
   const sync = useSync()
   const { theme } = useTheme()
   const [hover, setHover] = createSignal(false)
