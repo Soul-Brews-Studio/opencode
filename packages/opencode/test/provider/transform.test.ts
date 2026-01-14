@@ -39,22 +39,37 @@ describe("ProviderTransform.options - setCacheKey", () => {
   } as any
 
   test("should set promptCacheKey when providerOptions.setCacheKey is true", () => {
-    const result = ProviderTransform.options(mockModel, sessionID, { setCacheKey: true })
+    const result = ProviderTransform.options({
+      model: mockModel,
+      sessionID,
+      providerOptions: { setCacheKey: true },
+      auth: undefined,
+    })
     expect(result.promptCacheKey).toBe(sessionID)
   })
 
   test("should not set promptCacheKey when providerOptions.setCacheKey is false", () => {
-    const result = ProviderTransform.options(mockModel, sessionID, { setCacheKey: false })
+    const result = ProviderTransform.options({
+      model: mockModel,
+      sessionID,
+      providerOptions: { setCacheKey: false },
+      auth: undefined,
+    })
     expect(result.promptCacheKey).toBeUndefined()
   })
 
   test("should not set promptCacheKey when providerOptions is undefined", () => {
-    const result = ProviderTransform.options(mockModel, sessionID, undefined)
+    const result = ProviderTransform.options({
+      model: mockModel,
+      sessionID,
+      providerOptions: undefined,
+      auth: undefined,
+    })
     expect(result.promptCacheKey).toBeUndefined()
   })
 
   test("should not set promptCacheKey when providerOptions does not have setCacheKey", () => {
-    const result = ProviderTransform.options(mockModel, sessionID, {})
+    const result = ProviderTransform.options({ model: mockModel, sessionID, providerOptions: {}, auth: undefined })
     expect(result.promptCacheKey).toBeUndefined()
   })
 
@@ -68,8 +83,46 @@ describe("ProviderTransform.options - setCacheKey", () => {
         npm: "@ai-sdk/openai",
       },
     }
-    const result = ProviderTransform.options(openaiModel, sessionID, {})
+    const result = ProviderTransform.options({ model: openaiModel, sessionID, providerOptions: {}, auth: undefined })
     expect(result.promptCacheKey).toBe(sessionID)
+  })
+
+  test("should set store=false for openai provider with oauth auth", () => {
+    const openaiModel = {
+      ...mockModel,
+      providerID: "openai",
+      api: {
+        id: "gpt-4",
+        url: "https://api.openai.com",
+        npm: "@ai-sdk/openai",
+      },
+    }
+    const result = ProviderTransform.options({
+      model: openaiModel,
+      sessionID,
+      providerOptions: {},
+      auth: { type: "oauth", refresh: "r", access: "a", expires: 0 },
+    })
+    expect(result.store).toBe(false)
+  })
+
+  test("should not set store=false for openai provider with api auth", () => {
+    const openaiModel = {
+      ...mockModel,
+      providerID: "openai",
+      api: {
+        id: "gpt-4",
+        url: "https://api.openai.com",
+        npm: "@ai-sdk/openai",
+      },
+    }
+    const result = ProviderTransform.options({
+      model: openaiModel,
+      sessionID,
+      providerOptions: {},
+      auth: { type: "api", key: "sk-xxx" },
+    })
+    expect(result.store).toBeUndefined()
   })
 })
 

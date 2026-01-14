@@ -95,7 +95,12 @@ export namespace LLM {
       !input.small && input.model.variants && input.user.variant ? input.model.variants[input.user.variant] : {}
     const base = input.small
       ? ProviderTransform.smallOptions(input.model)
-      : ProviderTransform.options(input.model, input.sessionID, provider.options)
+      : ProviderTransform.options({
+          model: input.model,
+          sessionID: input.sessionID,
+          providerOptions: provider.options,
+          auth,
+        })
     const options: Record<string, any> = pipe(
       base,
       mergeDeep(input.model.options),
@@ -104,7 +109,6 @@ export namespace LLM {
     )
     if (isCodex) {
       options.instructions = SystemPrompt.instructions()
-      options.store = false
     }
 
     const params = await Plugin.trigger(

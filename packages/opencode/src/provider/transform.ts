@@ -3,6 +3,7 @@ import { unique } from "remeda"
 import type { JSONSchema } from "zod/v4/core"
 import type { Provider } from "./provider"
 import type { ModelsDev } from "./models"
+import type { Auth } from "@/auth"
 import { iife } from "@/util/iife"
 
 type Modality = NonNullable<ModelsDev.Model["modalities"]>["input"][number]
@@ -453,64 +454,70 @@ export namespace ProviderTransform {
     return {}
   }
 
-  export function options(
-    model: Provider.Model,
-    sessionID: string,
-    providerOptions?: Record<string, any>,
-  ): Record<string, any> {
+  export function options(input: {
+    model: Provider.Model
+    sessionID: string
+    providerOptions?: Record<string, any>
+    auth: Auth.Info | undefined
+  }): Record<string, any> {
     const result: Record<string, any> = {}
 
-    if (model.api.npm === "@openrouter/ai-sdk-provider") {
+    // all codex plans MUST use store = false
+    if (input.model.providerID === "openai" && input.auth?.type === "oauth") {
+      result["store"] = false
+    }
+
+    if (input.model.api.npm === "@openrouter/ai-sdk-provider") {
       result["usage"] = {
         include: true,
       }
-      if (model.api.id.includes("gemini-3")) {
+      if (input.model.api.id.includes("gemini-3")) {
         result["reasoning"] = { effort: "high" }
       }
     }
 
     if (
-      model.providerID === "baseten" ||
-      (model.providerID === "opencode" && ["kimi-k2-thinking", "glm-4.6"].includes(model.api.id))
+      input.model.providerID === "baseten" ||
+      (input.model.providerID === "opencode" && ["kimi-k2-thinking", "glm-4.6"].includes(input.model.api.id))
     ) {
       result["chat_template_args"] = { enable_thinking: true }
     }
 
-    if (["zai", "zhipuai"].includes(model.providerID) && model.api.npm === "@ai-sdk/openai-compatible") {
+    if (["zai", "zhipuai"].includes(input.model.providerID) && input.model.api.npm === "@ai-sdk/openai-compatible") {
       result["thinking"] = {
         type: "enabled",
         clear_thinking: false,
       }
     }
 
-    if (model.providerID === "openai" || providerOptions?.setCacheKey) {
-      result["promptCacheKey"] = sessionID
+    if (input.model.providerID === "openai" || input.providerOptions?.setCacheKey) {
+      result["promptCacheKey"] = input.sessionID
     }
 
-    if (model.api.npm === "@ai-sdk/google" || model.api.npm === "@ai-sdk/google-vertex") {
+    if (input.model.api.npm === "@ai-sdk/google" || input.model.api.npm === "@ai-sdk/google-vertex") {
       result["thinkingConfig"] = {
         includeThoughts: true,
       }
-      if (model.api.id.includes("gemini-3")) {
+      if (input.model.api.id.includes("gemini-3")) {
         result["thinkingConfig"]["thinkingLevel"] = "high"
       }
     }
 
-    if (model.api.id.includes("gpt-5") && !model.api.id.includes("gpt-5-chat")) {
-      if (model.providerID.includes("codex")) {
+    if (input.model.api.id.includes("gpt-5") && !input.model.api.id.includes("gpt-5-chat")) {
+      if (input.model.providerID.includes("codex")) {
         result["store"] = false
       }
 
-      if (!model.api.id.includes("codex") && !model.api.id.includes("gpt-5-pro")) {
+      if (!input.model.api.id.includes("codex") && !input.model.api.id.includes("gpt-5-pro")) {
         result["reasoningEffort"] = "medium"
       }
 
-      if (model.api.id.endsWith("gpt-5.") && model.providerID !== "azure") {
+      if (input.model.api.id.endsWith("gpt-5.") && input.model.providerID !== "azure") {
         result["textVerbosity"] = "low"
       }
 
-      if (model.providerID.startsWith("opencode")) {
-        result["promptCacheKey"] = sessionID
+      if (input.model.providerID.startsWith("opencode")) {
+        result["promptCacheKey"] = input.sessionID
         result["include"] = ["reasoning.encrypted_content"]
         result["reasoningSummary"] = "auto"
       }

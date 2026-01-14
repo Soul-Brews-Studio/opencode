@@ -1,0 +1,348 @@
+{
+  "info": {
+    "id": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+    "slug": "glowing-garden",
+    "version": "0.0.0-dev-202601142035",
+    "projectID": "4b0ea68d7af9a6031a7ffda7ad66e0cb83315750",
+    "directory": "/Users/aidencline/development/opencode",
+    "title": "Greeting catch-up chat",
+    "time": {
+      "created": 1768423574827,
+      "updated": 1768423593422
+    },
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "id": "msg_bbe424d2f00120ijb14FQCGNc3",
+        "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+        "role": "user",
+        "time": {
+          "created": 1768423574839
+        },
+        "summary": {
+          "title": "Simple greeting note: Helloo",
+          "diffs": []
+        },
+        "agent": "build",
+        "model": {
+          "providerID": "openai",
+          "modelID": "gpt-5.2-codex"
+        },
+        "variant": "high"
+      },
+      "parts": [
+        {
+          "id": "prt_bbe424d2f002jyG27z5VzBMKwa",
+          "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+          "messageID": "msg_bbe424d2f00120ijb14FQCGNc3",
+          "type": "text",
+          "text": "Helloo"
+        }
+      ]
+    },
+    {
+      "info": {
+        "id": "msg_bbe424d42001DteS1qORhxp6fn",
+        "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+        "role": "assistant",
+        "time": {
+          "created": 1768423574850,
+          "completed": 1768423579198
+        },
+        "parentID": "msg_bbe424d2f00120ijb14FQCGNc3",
+        "modelID": "gpt-5.2-codex",
+        "providerID": "openai",
+        "mode": "build",
+        "agent": "build",
+        "path": {
+          "cwd": "/Users/aidencline/development/opencode",
+          "root": "/Users/aidencline/development/opencode"
+        },
+        "cost": 0.026537,
+        "tokens": {
+          "input": 15052,
+          "output": 14,
+          "reasoning": 0,
+          "cache": {
+            "read": 0,
+            "write": 0
+          }
+        },
+        "finish": "stop"
+      },
+      "parts": [
+        {
+          "id": "prt_bbe425dfe001tylFeRhFVxRiIV",
+          "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+          "messageID": "msg_bbe424d42001DteS1qORhxp6fn",
+          "type": "step-start",
+          "snapshot": "92589bb4f79eff37fc4e6d25d4b6794cf01c956f"
+        },
+        {
+          "id": "prt_bbe425dff001fd7GPeD22KjSWZ",
+          "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+          "messageID": "msg_bbe424d42001DteS1qORhxp6fn",
+          "type": "reasoning",
+          "text": "",
+          "metadata": {
+            "openai": {
+              "itemId": "rs_0f251e66abfc3a1e006968009a62b0819c818ef7a34b35e5f1",
+              "reasoningEncryptedContent": "gAAAAABpaACafTEVzjtu8JssF7-OS2XXWeFodFFRHIGNQslmX51SchUx8p31PFmEGg_NNQ0O1r-WX10n_P9PZnl_EBgwLZDJUChT784MLS_pp3PyYc3HC6-eNRoDsEnzrkiUTWBiNx-U4Yq6yDriXTCMBkPjPUpSljgwQh3bT31a7pZ8PWfO2KG56zBKFljWb0UnLJjDiDL0MjNnVtb5JqZWQ8hWXUuv8o4LlYy-WqbN_Phj-gscnOd0ODbnrO6O9SDzre78Y7TwqCtqLi0bhjINViqkX72zK66-Rz8mGxmfNTCKFrVd5WUUUeM9w3SuYNRqJCyACZlMG2BPvhHpQDA2ouuCrFMHeP643hv9rSL7cz1krV0OANZTP1T_T8Pby9I9_8jZRXGIevFC6dEg_BJPDWjW3mxCN837tTuyaNb5JKCA8WPKktdp5L45UP5O5Sf3BmVUiKlRajzcnpmWCMoSzhR92YS-hZ9V6MvbclVZTol0XxXCFMw5XTx8PfWGDohnhp0UMGEqV3Dvo-__PTZITdf18tDj9ZvhMcvsYjvmoYFyw_8zXQhdT7EPqSPqdZqgqPVHR8BQNtZWTSPg3LhpCHYVPe9omf-63P4P34SWxuTOozLni-fFA2WawOCpDzbrtCLvaTrWKqKoOnxaLv3SdgV0ByggVNn-lSBnltKTzQKn3Cj_QfyV4o4UPlHi8JjbpMCpNITybbNuzIcP6jP1vWfDHqKC7Jk86AQGss2JDPuRfYdyYXfEkTPSCdgXEskgxAAvDufPPdc4AI7hTlnzhanqbUseKoKvxZrpU_KU-fB8HpM9T-_4ErMbvOgMkp7RPiS3GybBxCFgBBbhBCZhm_pCFxoTgjXEGa8iRTgZbeh5dBNVHk4="
+            }
+          },
+          "time": {
+            "start": 1768423579135,
+            "end": 1768423579135
+          }
+        },
+        {
+          "id": "prt_bbe425e00001V1yaBsuCYdy2kt",
+          "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+          "messageID": "msg_bbe424d42001DteS1qORhxp6fn",
+          "type": "text",
+          "text": "Hey! How can I help today?",
+          "time": {
+            "start": 1768423579137,
+            "end": 1768423579137
+          },
+          "metadata": {
+            "openai": {
+              "itemId": "msg_0f251e66abfc3a1e006968009ae7f0819cb7e35354587c5ed9"
+            }
+          }
+        },
+        {
+          "id": "prt_bbe425e02001wamNXw8crQaxwz",
+          "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+          "messageID": "msg_bbe424d42001DteS1qORhxp6fn",
+          "type": "step-finish",
+          "reason": "stop",
+          "snapshot": "92589bb4f79eff37fc4e6d25d4b6794cf01c956f",
+          "cost": 0.026537,
+          "tokens": {
+            "input": 15052,
+            "output": 14,
+            "reasoning": 0,
+            "cache": {
+              "read": 0,
+              "write": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "info": {
+        "id": "msg_bbe4272b3001VTE4T9MRZ9cVgd",
+        "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+        "role": "user",
+        "time": {
+          "created": 1768423584440
+        },
+        "summary": {
+          "title": "README explanation and project overview",
+          "diffs": []
+        },
+        "agent": "build",
+        "model": {
+          "providerID": "openai",
+          "modelID": "gpt-5.2-codex"
+        },
+        "variant": "high"
+      },
+      "parts": [
+        {
+          "id": "prt_bbe4272b4001sm75kVdmwwc7N0",
+          "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+          "messageID": "msg_bbe4272b3001VTE4T9MRZ9cVgd",
+          "type": "text",
+          "text": "read my readme and explain project"
+        }
+      ]
+    },
+    {
+      "info": {
+        "id": "msg_bbe4272bd001zTvdwgAG7xiaI9",
+        "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+        "role": "assistant",
+        "time": {
+          "created": 1768423584445,
+          "completed": 1768423589447
+        },
+        "parentID": "msg_bbe4272b3001VTE4T9MRZ9cVgd",
+        "modelID": "gpt-5.2-codex",
+        "providerID": "openai",
+        "mode": "build",
+        "agent": "build",
+        "path": {
+          "cwd": "/Users/aidencline/development/opencode",
+          "root": "/Users/aidencline/development/opencode"
+        },
+        "cost": 0.00323155,
+        "tokens": {
+          "input": 101,
+          "output": 31,
+          "reasoning": 0,
+          "cache": {
+            "read": 14976,
+            "write": 0
+          }
+        },
+        "finish": "tool-calls"
+      },
+      "parts": [
+        {
+          "id": "prt_bbe42860700166hdZ87CN0RnGX",
+          "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+          "messageID": "msg_bbe4272bd001zTvdwgAG7xiaI9",
+          "type": "step-start",
+          "snapshot": "92589bb4f79eff37fc4e6d25d4b6794cf01c956f"
+        },
+        {
+          "id": "prt_bbe4286080012Nzn3hPheDenwl",
+          "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+          "messageID": "msg_bbe4272bd001zTvdwgAG7xiaI9",
+          "type": "reasoning",
+          "text": "**Planning README read**\n\nI need to read the README file and am considering using a direct path or glob to locate it, favoring reading /Users/aidencline/development/opencode/README.md.",
+          "metadata": {
+            "openai": {
+              "itemId": "rs_0f251e66abfc3a1e00696800a2ffa8819c8e428e32a0924bbe",
+              "reasoningEncryptedContent": "gAAAAABpaAClTxa2kLNStT-_Bb8iu3y5mNhaeLnCLtPi4WmNqaPUWUl36OgxVfHZ-IMi1S8TAVqeLDpuMTehuTjfmqeyii1YFR8SxlhOhKeSLZH9_eBH7XMlHFndIp-i8oM0w_QkKPPal-yQqbHd4xcgS6goX2rr7XOOpOTcX_UN2RpvQxpJa05RkbHkX2kp2_IlM0dSma7Kd9IdPsM4mYMd2RqHsn6VnUj41oL7ptcSfaIIhJS0y7JBlCi8AMxF5Z0uBeVhp_HLN4ZqfziPY_XtOrPncyBd3IwWGg-mMpq26qj03PyncgJ3WPtyIr9O-r0NHWJKtis6dcOWOem-RpJ8f9ZvMqoRlA7C2pRMP0L58sc52P9QFCyiTKs37zZ5VByFzKcgBtSD_YHvu5xWDEn9D7QEy68tjcaseL41312l_wlLpmuPjLvMyPkxAr_LP4-EJW04WHWTkObfggZu45snu6jQZm56WWa9ijLeD4d4CAFG-JNfWb-7hrIt8ZYIiS5m3TE9bMy78el2cFkior5AZplMQoo2gXhx9Q8XN9w6xFLoGLWwCtfX-Nm8tmeMDGdDStk46j3zABgS_W2dxD-auJ6rD2CDJQyzoPm-emA-KABpSm3I0XhDe4zKpRzbwPjvL9mtYbkXG4cG3tiK5G2CZEXmyta-xeC8psWUSD-fbvEyc5mbfh6rkv9SFgKHeXVSsu04V8NbKe0Nz0XOxtS5m3sO1YPqAjnsHbVeUUQxg1N47J2FAN-qkJwoLlIeoy1MwDOlq9tYLAJQkC577BHa-apNH71MexgjDhFcanv3zq5UBdTxs-x6pDufa9HDf5qmWL2tzevy9rJleVnnMZ97aylY3Q2bsnGPQBuJM_HILVed3EUf2BI08yteVbTFgIA6hRSdilsNYt8cUHJfSR-zADyrKY4OLOJXIAQcApVSRXq0GzdjXKfKbLOpomdU7RoZK8zs19TqieLPfPfMmKjQ4W3Q6of0IEfargc6lngeQtSR05ijdtoePqwHej4jSuarEGJo4SlY84R8kQLx2ZMIUvWIUmUfcOjTVo7RhEXO5kW3KAa2ZZY="
+            }
+          },
+          "time": {
+            "start": 1768423589384,
+            "end": 1768423589390
+          }
+        },
+        {
+          "id": "prt_bbe42860e0017PEtVVfp8s4HxM",
+          "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+          "messageID": "msg_bbe4272bd001zTvdwgAG7xiaI9",
+          "type": "tool",
+          "callID": "call_52Ssi7DCzmyClgs0Zt9Z1uMT",
+          "tool": "read",
+          "state": {
+            "status": "completed",
+            "input": {
+              "filePath": "/Users/aidencline/development/opencode/README.md"
+            },
+            "output": "<file>\n00001| <p align=\"center\">\n00002|   <a href=\"https://opencode.ai\">\n00003|     <picture>\n00004|       <source srcset=\"packages/console/app/src/asset/logo-ornate-dark.svg\" media=\"(prefers-color-scheme: dark)\">\n00005|       <source srcset=\"packages/console/app/src/asset/logo-ornate-light.svg\" media=\"(prefers-color-scheme: light)\">\n00006|       <img src=\"packages/console/app/src/asset/logo-ornate-light.svg\" alt=\"OpenCode logo\">\n00007|     </picture>\n00008|   </a>\n00009| </p>\n00010| <p align=\"center\">The open source AI coding agent.</p>\n00011| <p align=\"center\">\n00012|   <a href=\"https://opencode.ai/discord\"><img alt=\"Discord\" src=\"https://img.shields.io/discord/1391832426048651334?style=flat-square&label=discord\" /></a>\n00013|   <a href=\"https://www.npmjs.com/package/opencode-ai\"><img alt=\"npm\" src=\"https://img.shields.io/npm/v/opencode-ai?style=flat-square\" /></a>\n00014|   <a href=\"https://github.com/anomalyco/opencode/actions/workflows/publish.yml\"><img alt=\"Build status\" src=\"https://img.shields.io/github/actions/workflow/status/anomalyco/opencode/publish.yml?style=flat-square&branch=dev\" /></a>\n00015| </p>\n00016| \n00017| [![OpenCode Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://opencode.ai)\n00018| \n00019| ---\n00020| \n00021| ### Installation\n00022| \n00023| ```bash\n00024| # YOLO\n00025| curl -fsSL https://opencode.ai/install | bash\n00026| \n00027| # Package managers\n00028| npm i -g opencode-ai@latest        # or bun/pnpm/yarn\n00029| scoop bucket add extras; scoop install extras/opencode  # Windows\n00030| choco install opencode             # Windows\n00031| brew install anomalyco/tap/opencode # macOS and Linux (recommended, always up to date)\n00032| brew install opencode              # macOS and Linux (official brew formula, updated less)\n00033| paru -S opencode-bin               # Arch Linux\n00034| mise use -g opencode               # Any OS\n00035| nix run nixpkgs#opencode           # or github:anomalyco/opencode for latest dev branch\n00036| ```\n00037| \n00038| > [!TIP]\n00039| > Remove versions older than 0.1.x before installing.\n00040| \n00041| ### Desktop App (BETA)\n00042| \n00043| OpenCode is also available as a desktop application. Download directly from the [releases page](https://github.com/anomalyco/opencode/releases) or [opencode.ai/download](https://opencode.ai/download).\n00044| \n00045| | Platform              | Download                              |\n00046| | --------------------- | ------------------------------------- |\n00047| | macOS (Apple Silicon) | `opencode-desktop-darwin-aarch64.dmg` |\n00048| | macOS (Intel)         | `opencode-desktop-darwin-x64.dmg`     |\n00049| | Windows               | `opencode-desktop-windows-x64.exe`    |\n00050| | Linux                 | `.deb`, `.rpm`, or AppImage           |\n00051| \n00052| ```bash\n00053| # macOS (Homebrew)\n00054| brew install --cask opencode-desktop\n00055| ```\n00056| \n00057| #### Installation Directory\n00058| \n00059| The install script respects the following priority order for the installation path:\n00060| \n00061| 1. `$OPENCODE_INSTALL_DIR` - Custom installation directory\n00062| 2. `$XDG_BIN_DIR` - XDG Base Directory Specification compliant path\n00063| 3. `$HOME/bin` - Standard user binary directory (if exists or can be created)\n00064| 4. `$HOME/.opencode/bin` - Default fallback\n00065| \n00066| ```bash\n00067| # Examples\n00068| OPENCODE_INSTALL_DIR=/usr/local/bin curl -fsSL https://opencode.ai/install | bash\n00069| XDG_BIN_DIR=$HOME/.local/bin curl -fsSL https://opencode.ai/install | bash\n00070| ```\n00071| \n00072| ### Agents\n00073| \n00074| OpenCode includes two built-in agents you can switch between with the `Tab` key.\n00075| \n00076| - **build** - Default, full access agent for development work\n00077| - **plan** - Read-only agent for analysis and code exploration\n00078|   - Denies file edits by default\n00079|   - Asks permission before running bash commands\n00080|   - Ideal for exploring unfamiliar codebases or planning changes\n00081| \n00082| Also, included is a **general** subagent for complex searches and multistep tasks.\n00083| This is used internally and can be invoked using `@general` in messages.\n00084| \n00085| Learn more about [agents](https://opencode.ai/docs/agents).\n00086| \n00087| ### Documentation\n00088| \n00089| For more info on how to configure OpenCode [**head over to our docs**](https://opencode.ai/docs).\n00090| \n00091| ### Contributing\n00092| \n00093| If you're interested in contributing to OpenCode, please read our [contributing docs](./CONTRIBUTING.md) before submitting a pull request.\n00094| \n00095| ### Building on OpenCode\n00096| \n00097| If you are working on a project that's related to OpenCode and is using \"opencode\" as a part of its name; for example, \"opencode-dashboard\" or \"opencode-mobile\", please add a note to your README to clarify that it is not built by the OpenCode team and is not affiliated with us in any way.\n00098| \n00099| ### FAQ\n00100| \n00101| #### How is this different from Claude Code?\n00102| \n00103| It's very similar to Claude Code in terms of capability. Here are the key differences:\n00104| \n00105| - 100% open source\n00106| - Not coupled to any provider. Although we recommend the models we provide through [OpenCode Zen](https://opencode.ai/zen); OpenCode can be used with Claude, OpenAI, Google or even local models. As models evolve the gaps between them will close and pricing will drop so being provider-agnostic is important.\n00107| - Out of the box LSP support\n00108| - A focus on TUI. OpenCode is built by neovim users and the creators of [terminal.shop](https://terminal.shop); we are going to push the limits of what's possible in the terminal.\n00109| - A client/server architecture. This for example can allow OpenCode to run on your computer, while you can drive it remotely from a mobile app. Meaning that the TUI frontend is just one of the possible clients.\n00110| \n00111| ---\n00112| \n00113| **Join our community** [Discord](https://discord.gg/opencode) | [X.com](https://x.com/opencode)\n00114| \n\n(End of file - total 114 lines)\n</file>",
+            "title": "README.md",
+            "metadata": {
+              "preview": "<p align=\"center\">\n  <a href=\"https://opencode.ai\">\n    <picture>\n      <source srcset=\"packages/console/app/src/asset/logo-ornate-dark.svg\" media=\"(prefers-color-scheme: dark)\">\n      <source srcset=\"packages/console/app/src/asset/logo-ornate-light.svg\" media=\"(prefers-color-scheme: light)\">\n      <img src=\"packages/console/app/src/asset/logo-ornate-light.svg\" alt=\"OpenCode logo\">\n    </picture>\n  </a>\n</p>\n<p align=\"center\">The open source AI coding agent.</p>\n<p align=\"center\">\n  <a href=\"https://opencode.ai/discord\"><img alt=\"Discord\" src=\"https://img.shields.io/discord/1391832426048651334?style=flat-square&label=discord\" /></a>\n  <a href=\"https://www.npmjs.com/package/opencode-ai\"><img alt=\"npm\" src=\"https://img.shields.io/npm/v/opencode-ai?style=flat-square\" /></a>\n  <a href=\"https://github.com/anomalyco/opencode/actions/workflows/publish.yml\"><img alt=\"Build status\" src=\"https://img.shields.io/github/actions/workflow/status/anomalyco/opencode/publish.yml?style=flat-square&branch=dev\" /></a>\n</p>\n\n[![OpenCode Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://opencode.ai)\n\n---\n",
+              "truncated": false
+            },
+            "time": {
+              "start": 1768423589391,
+              "end": 1768423589392
+            }
+          },
+          "metadata": {
+            "openai": {
+              "itemId": "fc_0f251e66abfc3a1e00696800a514d0819ca3bdcb6deb51d375"
+            }
+          }
+        },
+        {
+          "id": "prt_bbe428611001gpVltZwFRQFvVV",
+          "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+          "messageID": "msg_bbe4272bd001zTvdwgAG7xiaI9",
+          "type": "step-finish",
+          "reason": "tool-calls",
+          "snapshot": "92589bb4f79eff37fc4e6d25d4b6794cf01c956f",
+          "cost": 0.00323155,
+          "tokens": {
+            "input": 101,
+            "output": 31,
+            "reasoning": 0,
+            "cache": {
+              "read": 14976,
+              "write": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "info": {
+        "id": "msg_bbe42864a001SoQKUk5dtIu7wb",
+        "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+        "role": "assistant",
+        "time": {
+          "created": 1768423589450,
+          "completed": 1768423593413
+        },
+        "parentID": "msg_bbe4272b3001VTE4T9MRZ9cVgd",
+        "modelID": "gpt-5.2-codex",
+        "providerID": "openai",
+        "mode": "build",
+        "agent": "build",
+        "path": {
+          "cwd": "/Users/aidencline/development/opencode",
+          "root": "/Users/aidencline/development/opencode"
+        },
+        "cost": 0.0076643,
+        "tokens": {
+          "input": 1866,
+          "output": 127,
+          "reasoning": 0,
+          "cache": {
+            "read": 14976,
+            "write": 0
+          }
+        },
+        "finish": "stop"
+      },
+      "parts": [
+        {
+          "id": "prt_bbe42957c001G2nL0DDJY7Q80W",
+          "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+          "messageID": "msg_bbe42864a001SoQKUk5dtIu7wb",
+          "type": "step-start",
+          "snapshot": "92589bb4f79eff37fc4e6d25d4b6794cf01c956f"
+        },
+        {
+          "id": "prt_bbe42957d001neCElzalxzFjRv",
+          "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+          "messageID": "msg_bbe42864a001SoQKUk5dtIu7wb",
+          "type": "text",
+          "text": "Here’s a quick overview of the project based on `README.md`:\n\n**Summary**\n- OpenCode is an open‑source AI coding agent focused on a terminal UI experience.\n- It ships as a CLI and a desktop app, with multiple install options across platforms.\n- It supports multiple model providers and emphasizes provider‑agnostic workflows.\n- It includes built‑in agents (build/plan) and a general subagent for complex tasks.\n- It uses a client/server architecture for flexible frontends beyond the TUI.\n\nWant a deeper walkthrough of specific parts (CLI, agents, SDKs, desktop app)?",
+          "time": {
+            "start": 1768423593356,
+            "end": 1768423593356
+          },
+          "metadata": {
+            "openai": {
+              "itemId": "msg_0f251e66abfc3a1e00696800a6e2f4819c9bff0c98e6a5ce3b"
+            }
+          }
+        },
+        {
+          "id": "prt_bbe42958d001GOD7AK1WFYTGzO",
+          "sessionID": "ses_441bdb2d4ffeUrukcqQcQt57q0",
+          "messageID": "msg_bbe42864a001SoQKUk5dtIu7wb",
+          "type": "step-finish",
+          "reason": "stop",
+          "snapshot": "92589bb4f79eff37fc4e6d25d4b6794cf01c956f",
+          "cost": 0.0076643,
+          "tokens": {
+            "input": 1866,
+            "output": 127,
+            "reasoning": 0,
+            "cache": {
+              "read": 14976,
+              "write": 0
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
