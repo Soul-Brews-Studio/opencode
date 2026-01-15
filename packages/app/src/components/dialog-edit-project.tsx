@@ -8,7 +8,7 @@ import { createMemo, createSignal, For, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { useGlobalSDK } from "@/context/global-sdk"
 import { type LocalProject, getAvatarColors } from "@/context/layout"
-import { ProjectIcon, isValidImageFile } from "@/components/project-icon"
+import { ProjectAvatar, isValidImageFile } from "@/components/project-avatar"
 
 const AVATAR_COLOR_KEYS = ["pink", "mint", "orange", "purple", "cyan", "lime"] as const
 
@@ -111,7 +111,7 @@ export function DialogEditProject(props: { project: LocalProject }) {
                   onDragLeave={handleDragLeave}
                   onClick={() => document.getElementById("icon-upload")?.click()}
                 >
-                  <ProjectIcon
+                  <ProjectAvatar
                     name={store.name || defaultName()}
                     projectId={props.project.id}
                     iconUrl={store.iconUrl}

@@ -5,7 +5,7 @@ import { getAvatarColors } from "@/context/layout"
 const OPENCODE_PROJECT_ID = "4b0ea68d7af9a6031a7ffda7ad66e0cb83315750"
 const OPENCODE_FAVICON_URL = "https://opencode.ai/favicon.svg"
 
-export interface ProjectIconProps extends Omit<ComponentProps<"div">, "children"> {
+export interface ProjectAvatarProps extends Omit<ComponentProps<"div">, "children"> {
   name: string
   iconUrl?: string
   iconColor?: string
@@ -36,7 +36,7 @@ export const isValidImageFile = (file: File): boolean => {
   return true
 }
 
-export const ProjectIcon = (props: ProjectIconProps) => {
+export const ProjectAvatar = (props: ProjectAvatarProps) => {
   const [local, rest] = splitProps(props, [
     "name",
     "iconUrl",

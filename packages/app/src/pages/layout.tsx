@@ -53,7 +53,7 @@ import { useTheme, type ColorScheme } from "@opencode-ai/ui/theme"
 import { DialogSelectProvider } from "@/components/dialog-select-provider"
 import { DialogSelectServer } from "@/components/dialog-select-server"
 import { useCommand, type CommandOption } from "@/context/command"
-import { ProjectIcon } from "@/components/project-icon"
+import { ProjectAvatar } from "@/components/project-avatar"
 import { ConstrainDragXAxis } from "@/utils/solid-dnd"
 import { navStart } from "@/utils/perf"
 import { DialogSelectDirectory } from "@/components/dialog-select-directory"
@@ -813,27 +813,24 @@ export default function Layout(props: ParentProps) {
     const hasError = createMemo(() => notifications().some((n) => n.type === "error"))
     const name = createMemo(() => props.project.name || getFilename(props.project.worktree))
     const mask = "radial-gradient(circle 6px at calc(100% - 3px) 3px, transparent 6px, black 6.5px)"
-    const opencode = "4b0ea68d7af9a6031a7ffda7ad66e0cb83315750"
 
     return (
-      <div class="relative size-5 shrink-0 rounded-sm">
-        <ProjectIcon
-          name={name()}
-          projectId={props.project.id}
-          iconUrl={props.project.icon?.url}
-          iconColor={props.project.icon?.color}
-          size="small"
-          class={`size-full ${props.class ?? ""}`}
-          style={
-            notifications().length > 0 && props.notify ? { "-webkit-mask-image": mask, "mask-image": mask } : undefined
-          }
-        />
-        <Show when={props.expandable}>
-          <Icon
-            name="chevron-right"
-            size="normal"
-            class="hidden size-full items-center justify-center text-text-subtle group-hover/session:flex group-data-[expanded]/trigger:rotate-90 transition-transform duration-50"
+      <div class={`relative size-8 shrink-0 rounded-sm ${props.class ?? ""}`}>
+        <div class="size-full rounded-sm overflow-clip">
+          <ProjectAvatar
+            name={name()}
+            projectId={props.project.id}
+            iconUrl={props.project.icon?.url}
+            iconColor={props.project.icon?.color}
+            size="small"
+            class={`size-full ${props.class ?? ""}`}
+            style={
+              notifications().length > 0 && props.notify
+                ? { "-webkit-mask-image": mask, "mask-image": mask }
+                : undefined
+            }
           />
+        </div>
         <Show when={notifications().length > 0 && props.notify}>
           <div
             classList={{
