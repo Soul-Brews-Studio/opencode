@@ -23,6 +23,7 @@ import type { FilePart } from "@opencode-ai/sdk/v2"
 import { TuiEvent } from "../../event"
 import { iife } from "@/util/iife"
 import { Locale } from "@/util/locale"
+import { formatDuration } from "@/util/format"
 import { createColors, createFrames } from "../../ui/spinner.ts"
 import { useDialog } from "@tui/ui/dialog"
 import { DialogProvider as DialogProviderConnect } from "../dialog-provider"
@@ -1030,27 +1031,6 @@ export function Prompt(props: PromptProps) {
                       if (isTruncated()) {
                         DialogAlert.show(dialog, "Retry Error", r.message)
                       }
-                    }
-
-                    const formatDuration = (secs: number) => {
-                      if (secs <= 0) return ""
-                      if (secs < 60) return `${secs}s`
-                      if (secs < 3600) {
-                        const mins = Math.floor(secs / 60)
-                        const remainingSecs = secs % 60
-                        return remainingSecs > 0 ? `${mins}m ${remainingSecs}s` : `${mins}m`
-                      }
-                      if (secs < 86400) {
-                        const hours = Math.floor(secs / 3600)
-                        const remainingMins = Math.floor((secs % 3600) / 60)
-                        return remainingMins > 0 ? `${hours}h ${remainingMins}m` : `${hours}h`
-                      }
-                      if (secs < 604800) {
-                        const days = Math.floor(secs / 86400)
-                        return days === 1 ? "~1 day" : `~${days} days`
-                      }
-                      const weeks = Math.floor(secs / 604800)
-                      return weeks === 1 ? "~1 week" : `~${weeks} weeks`
                     }
 
                     const retryText = () => {
