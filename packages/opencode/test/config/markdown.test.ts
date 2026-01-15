@@ -94,20 +94,36 @@ describe("ConfigMarkdown: frontmatter parsing", async () => {
   const template = `---
 description: "This is a description wrapped in quotes"
 # field: this is a commented out field that should be ignored
-# occupation: This man has the following occupation: Software Engineer
+occupation: This man has the following occupation: Software Engineer
 title: 'Hello World'
 name: John "Doe"
 
 family: He has no 'family'
 summary: >
   This is a summary
+url: https://example.com:8080/path?query=value
+time: The time is 12:30:00 PM
+nested: First: Second: Third: Fourth
+quoted_colon: "Already quoted: no change needed"
+single_quoted_colon: 'Single quoted: also fine'
+mixed: He said "hello: world" and then left
+empty:
+dollar: Use $' and $& for special patterns
 ---
 
-Content
+Content that should not be parsed:
+
+fake_field: this is not yaml
+another: neither is this
+time: 10:30:00 AM
+url: https://should-not-be-parsed.com:3000
+
+The above lines look like YAML but are just content.
 `
 
   const matter = await import("gray-matter")
-  const parsed = matter.default(template)
+  const preprocessed = ConfigMarkdown.preprocessFrontmatter(template)
+  const parsed = matter.default(preprocessed)
 
   test("should parse without throwing", () => {
     expect(parsed).toBeDefined()
@@ -117,6 +133,10 @@ Content
 
   test("should extract description field", () => {
     expect(parsed.data.description).toBe("This is a description wrapped in quotes")
+  })
+
+  test("should extract occupation field with colon in value", () => {
+    expect(parsed.data.occupation).toBe("This man has the following occupation: Software Engineer\n")
   })
 
   test("should extract title field with single quotes", () => {
@@ -137,10 +157,48 @@ Content
 
   test("should not include commented fields in data", () => {
     expect(parsed.data.field).toBeUndefined()
-    expect(parsed.data.occupation).toBeUndefined()
   })
 
-  test("should extract content after frontmatter", () => {
-    expect(parsed.content.trim()).toBe("Content")
+  test("should extract URL with port", () => {
+    expect(parsed.data.url).toBe("https://example.com:8080/path?query=value\n")
+  })
+
+  test("should extract time with colons", () => {
+    expect(parsed.data.time).toBe("The time is 12:30:00 PM\n")
+  })
+
+  test("should extract value with multiple colons", () => {
+    expect(parsed.data.nested).toBe("First: Second: Third: Fourth\n")
+  })
+
+  test("should preserve already double-quoted values with colons", () => {
+    expect(parsed.data.quoted_colon).toBe("Already quoted: no change needed")
+  })
+
+  test("should preserve already single-quoted values with colons", () => {
+    expect(parsed.data.single_quoted_colon).toBe("Single quoted: also fine")
+  })
+
+  test("should extract value with quotes and colons mixed", () => {
+    expect(parsed.data.mixed).toBe('He said "hello: world" and then left\n')
+  })
+
+  test("should handle empty values", () => {
+    expect(parsed.data.empty).toBeNull()
+  })
+
+  test("should handle dollar sign replacement patterns literally", () => {
+    expect(parsed.data.dollar).toBe("Use $' and $& for special patterns")
+  })
+
+  test("should not parse fake yaml from content", () => {
+    expect(parsed.data.fake_field).toBeUndefined()
+    expect(parsed.data.another).toBeUndefined()
+  })
+
+  test("should extract content after frontmatter without modification", () => {
+    expect(parsed.content).toContain("Content that should not be parsed:")
+    expect(parsed.content).toContain("fake_field: this is not yaml")
+    expect(parsed.content).toContain("url: https://should-not-be-parsed.com:3000")
   })
 })
