@@ -1,7 +1,9 @@
 import { BusEvent } from "@/bus/bus-event"
 import { Bus } from "@/bus"
 import z from "zod"
-import { Storage } from "../storage/storage"
+import { db } from "../storage/db"
+import { TodoTable } from "./session-aux.sql"
+import { eq } from "drizzle-orm"
 
 export namespace Todo {
   export const Info = z
@@ -24,14 +26,17 @@ export namespace Todo {
     ),
   }
 
-  export async function update(input: { sessionID: string; todos: Info[] }) {
-    await Storage.write(["todo", input.sessionID], input.todos)
+  export function update(input: { sessionID: string; todos: Info[] }) {
+    db()
+      .insert(TodoTable)
+      .values({ sessionID: input.sessionID, data: input.todos })
+      .onConflictDoUpdate({ target: TodoTable.sessionID, set: { data: input.todos } })
+      .run()
     Bus.publish(Event.Updated, input)
   }
 
-  export async function get(sessionID: string) {
-    return Storage.read<Info[]>(["todo", sessionID])
-      .then((x) => x || [])
-      .catch(() => [])
+  export function get(sessionID: string) {
+    const row = db().select().from(TodoTable).where(eq(TodoTable.sessionID, sessionID)).get()
+    return row?.data ?? []
   }
 }

@@ -4,7 +4,9 @@ import { ulid } from "ulid"
 import { Provider } from "@/provider/provider"
 import { Session } from "@/session"
 import { MessageV2 } from "@/session/message-v2"
-import { Storage } from "@/storage/storage"
+import { db } from "@/storage/db"
+import { SessionShareTable } from "./share.sql"
+import { eq } from "drizzle-orm"
 import { Log } from "@/util/log"
 import type * as SDK from "@opencode-ai/sdk/v2"
 
@@ -77,17 +79,18 @@ export namespace ShareNext {
     })
       .then((x) => x.json())
       .then((x) => x as { id: string; url: string; secret: string })
-    await Storage.write(["session_share", sessionID], result)
+    db()
+      .insert(SessionShareTable)
+      .values({ sessionID, data: result })
+      .onConflictDoUpdate({ target: SessionShareTable.sessionID, set: { data: result } })
+      .run()
     fullSync(sessionID)
     return result
   }
 
   function get(sessionID: string) {
-    return Storage.read<{
-      id: string
-      secret: string
-      url: string
-    }>(["session_share", sessionID])
+    const row = db().select().from(SessionShareTable).where(eq(SessionShareTable.sessionID, sessionID)).get()
+    return row?.data
   }
 
   type Data =
@@ -132,7 +135,7 @@ export namespace ShareNext {
       const queued = queue.get(sessionID)
       if (!queued) return
       queue.delete(sessionID)
-      const share = await get(sessionID).catch(() => undefined)
+      const share = get(sessionID)
       if (!share) return
 
       await fetch(`${await url()}/api/share/${share.id}/sync`, {
@@ -163,7 +166,7 @@ export namespace ShareNext {
         secret: share.secret,
       }),
     })
-    await Storage.remove(["session_share", sessionID])
+    db().delete(SessionShareTable).where(eq(SessionShareTable.sessionID, sessionID)).run()
   }
 
   async function fullSync(sessionID: string) {

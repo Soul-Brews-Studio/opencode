@@ -3,10 +3,13 @@ import fs from "fs/promises"
 import { Filesystem } from "../util/filesystem"
 import path from "path"
 import { $ } from "bun"
-import { Storage } from "../storage/storage"
+import { db } from "../storage/db"
+import { ProjectTable } from "./project.sql"
+import { SessionTable } from "../session/session.sql"
+import { eq } from "drizzle-orm"
 import { Log } from "../util/log"
 import { Flag } from "@/flag/flag"
-import { Session } from "../session"
+import type { Session } from "../session"
 import { work } from "../util/queue"
 import { fn } from "@opencode-ai/util/fn"
 import { BusEvent } from "@/bus/bus-event"
@@ -175,7 +178,8 @@ export namespace Project {
       }
     })
 
-    let existing = await Storage.read<Info>(["project", id]).catch(() => undefined)
+    const row = db().select().from(ProjectTable).where(eq(ProjectTable.id, id)).get()
+    let existing = row?.data
     if (!existing) {
       existing = {
         id,
@@ -208,7 +212,11 @@ export namespace Project {
     }
     if (sandbox !== result.worktree && !result.sandboxes.includes(sandbox)) result.sandboxes.push(sandbox)
     result.sandboxes = result.sandboxes.filter((x) => existsSync(x))
-    await Storage.write<Info>(["project", id], result)
+    db()
+      .insert(ProjectTable)
+      .values({ id, data: result })
+      .onConflictDoUpdate({ target: ProjectTable.id, set: { data: result } })
+      .run()
     GlobalBus.emit("event", {
       payload: {
         type: Event.Updated.type,
@@ -249,42 +257,44 @@ export namespace Project {
   }
 
   async function migrateFromGlobal(newProjectID: string, worktree: string) {
-    const globalProject = await Storage.read<Info>(["project", "global"]).catch(() => undefined)
-    if (!globalProject) return
+    const globalRow = db().select().from(ProjectTable).where(eq(ProjectTable.id, "global")).get()
+    if (!globalRow) return
 
-    const globalSessions = await Storage.list(["session", "global"]).catch(() => [])
+    const globalSessions = db().select().from(SessionTable).where(eq(SessionTable.projectID, "global")).all()
     if (globalSessions.length === 0) return
 
     log.info("migrating sessions from global", { newProjectID, worktree, count: globalSessions.length })
 
-    await work(10, globalSessions, async (key) => {
-      const sessionID = key[key.length - 1]
-      const session = await Storage.read<Session.Info>(key).catch(() => undefined)
+    await work(10, globalSessions, async (row) => {
+      const session = row.data as Session.Info
       if (!session) return
       if (session.directory && session.directory !== worktree) return
 
       session.projectID = newProjectID
-      log.info("migrating session", { sessionID, from: "global", to: newProjectID })
-      await Storage.write(["session", newProjectID, sessionID], session)
-      await Storage.remove(key)
+      log.info("migrating session", { sessionID: session.id, from: "global", to: newProjectID })
+      db()
+        .update(SessionTable)
+        .set({ projectID: newProjectID, data: session })
+        .where(eq(SessionTable.id, session.id))
+        .run()
     }).catch((error) => {
       log.error("failed to migrate sessions from global to project", { error, projectId: newProjectID })
     })
   }
 
-  export async function setInitialized(projectID: string) {
-    await Storage.update<Info>(["project", projectID], (draft) => {
-      draft.time.initialized = Date.now()
-    })
+  export function setInitialized(projectID: string) {
+    const row = db().select().from(ProjectTable).where(eq(ProjectTable.id, projectID)).get()
+    if (!row) return
+    const data = { ...row.data, time: { ...row.data.time, initialized: Date.now() } }
+    db().update(ProjectTable).set({ data }).where(eq(ProjectTable.id, projectID)).run()
   }
 
-  export async function list() {
-    const keys = await Storage.list(["project"])
-    const projects = await Promise.all(keys.map((x) => Storage.read<Info>(x)))
-    return projects.map((project) => ({
-      ...project,
-      sandboxes: project.sandboxes?.filter((x) => existsSync(x)),
-    }))
+  export function list() {
+    return db()
+      .select()
+      .from(ProjectTable)
+      .all()
+      .map((row) => row.data)
   }
 
   export const update = fn(
@@ -295,43 +305,39 @@ export namespace Project {
       commands: Info.shape.commands.optional(),
     }),
     async (input) => {
-      const result = await Storage.update<Info>(["project", input.projectID], (draft) => {
-        if (input.name !== undefined) draft.name = input.name
-        if (input.icon !== undefined) {
-          draft.icon = {
-            ...draft.icon,
-          }
-          if (input.icon.url !== undefined) draft.icon.url = input.icon.url
-          if (input.icon.override !== undefined) draft.icon.override = input.icon.override || undefined
-          if (input.icon.color !== undefined) draft.icon.color = input.icon.color
-        }
-
-        if (input.commands?.start !== undefined) {
-          const start = input.commands.start || undefined
-          draft.commands = {
-            ...(draft.commands ?? {}),
-          }
-          draft.commands.start = start
-          if (!draft.commands.start) draft.commands = undefined
-        }
-
-        draft.time.updated = Date.now()
-      })
+      const row = db().select().from(ProjectTable).where(eq(ProjectTable.id, input.projectID)).get()
+      if (!row) throw new Error(`Project not found: ${input.projectID}`)
+      const data = { ...row.data }
+      if (input.name !== undefined) data.name = input.name
+      if (input.icon !== undefined) {
+        data.icon = { ...data.icon }
+        if (input.icon.url !== undefined) data.icon.url = input.icon.url
+        if (input.icon.override !== undefined) data.icon.override = input.icon.override || undefined
+        if (input.icon.color !== undefined) data.icon.color = input.icon.color
+      }
+      if (input.commands?.start !== undefined) {
+        const start = input.commands.start || undefined
+        data.commands = { ...(data.commands ?? {}) }
+        data.commands.start = start
+        if (!data.commands.start) data.commands = undefined
+      }
+      data.time.updated = Date.now()
+      db().update(ProjectTable).set({ data }).where(eq(ProjectTable.id, input.projectID)).run()
       GlobalBus.emit("event", {
         payload: {
           type: Event.Updated.type,
-          properties: result,
+          properties: data,
         },
       })
-      return result
+      return data
     },
   )
 
   export async function sandboxes(projectID: string) {
-    const project = await Storage.read<Info>(["project", projectID]).catch(() => undefined)
-    if (!project?.sandboxes) return []
+    const row = db().select().from(ProjectTable).where(eq(ProjectTable.id, projectID)).get()
+    if (!row?.data.sandboxes) return []
     const valid: string[] = []
-    for (const dir of project.sandboxes) {
+    for (const dir of row.data.sandboxes) {
       const stat = await fs.stat(dir).catch(() => undefined)
       if (stat?.isDirectory()) valid.push(dir)
     }
@@ -339,33 +345,37 @@ export namespace Project {
   }
 
   export async function addSandbox(projectID: string, directory: string) {
-    const result = await Storage.update<Info>(["project", projectID], (draft) => {
-      const sandboxes = draft.sandboxes ?? []
-      if (!sandboxes.includes(directory)) sandboxes.push(directory)
-      draft.sandboxes = sandboxes
-      draft.time.updated = Date.now()
-    })
+    const row = db().select().from(ProjectTable).where(eq(ProjectTable.id, projectID)).get()
+    if (!row) throw new Error(`Project not found: ${projectID}`)
+    const data = { ...row.data }
+    const sandboxes = data.sandboxes ?? []
+    if (!sandboxes.includes(directory)) sandboxes.push(directory)
+    data.sandboxes = sandboxes
+    data.time.updated = Date.now()
+    db().update(ProjectTable).set({ data }).where(eq(ProjectTable.id, projectID)).run()
     GlobalBus.emit("event", {
       payload: {
         type: Event.Updated.type,
-        properties: result,
+        properties: data,
       },
     })
-    return result
+    return data
   }
 
   export async function removeSandbox(projectID: string, directory: string) {
-    const result = await Storage.update<Info>(["project", projectID], (draft) => {
-      const sandboxes = draft.sandboxes ?? []
-      draft.sandboxes = sandboxes.filter((sandbox) => sandbox !== directory)
-      draft.time.updated = Date.now()
-    })
+    const row = db().select().from(ProjectTable).where(eq(ProjectTable.id, projectID)).get()
+    if (!row) throw new Error(`Project not found: ${projectID}`)
+    const data = { ...row.data }
+    const sandboxes = data.sandboxes ?? []
+    data.sandboxes = sandboxes.filter((sandbox) => sandbox !== directory)
+    data.time.updated = Date.now()
+    db().update(ProjectTable).set({ data }).where(eq(ProjectTable.id, projectID)).run()
     GlobalBus.emit("event", {
       payload: {
         type: Event.Updated.type,
-        properties: result,
+        properties: data,
       },
     })
-    return result
+    return data
   }
 }

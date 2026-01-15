@@ -3,7 +3,9 @@ import { BusEvent } from "@/bus/bus-event"
 import { Config } from "@/config/config"
 import { Identifier } from "@/id/id"
 import { Instance } from "@/project/instance"
-import { Storage } from "@/storage/storage"
+import { db } from "@/storage/db"
+import { PermissionTable } from "@/session/session-aux.sql"
+import { eq } from "drizzle-orm"
 import { fn } from "@/util/fn"
 import { Log } from "@/util/log"
 import { Wildcard } from "@/util/wildcard"
@@ -107,7 +109,8 @@ export namespace PermissionNext {
 
   const state = Instance.state(async () => {
     const projectID = Instance.project.id
-    const stored = await Storage.read<Ruleset>(["permission", projectID]).catch(() => [] as Ruleset)
+    const row = db().select().from(PermissionTable).where(eq(PermissionTable.projectID, projectID)).get()
+    const stored = row?.data ?? ([] as Ruleset)
 
     const pending: Record<
       string,

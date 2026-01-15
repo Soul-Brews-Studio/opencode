@@ -99,6 +99,12 @@ const targets = singleFlag
     })
   : allTargets
 
+// Check migrations are up to date and generate embedded migrations file
+console.log("Checking migrations...")
+await $`bun run script/check-migrations.ts`
+console.log("Generating migrations embed...")
+await $`bun run script/generate-migrations.ts`
+
 await $`rm -rf dist`
 
 const binaries: Record<string, string> = {}

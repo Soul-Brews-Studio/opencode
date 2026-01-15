@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test"
 import { Project } from "../../src/project/project"
 import { Log } from "../../src/util/log"
-import { Storage } from "../../src/storage/storage"
+import { db } from "../../src/storage/db"
+import { ProjectTable } from "../../src/project/project.sql"
+import { eq } from "drizzle-orm"
 import { $ } from "bun"
 import path from "path"
 import { tmpdir } from "../fixture/fixture"
@@ -99,11 +101,12 @@ describe("Project.discover", () => {
 
     await Project.discover(project)
 
-    const updated = await Storage.read<Project.Info>(["project", project.id])
-    expect(updated.icon).toBeDefined()
-    expect(updated.icon?.url).toStartWith("data:")
-    expect(updated.icon?.url).toContain("base64")
-    expect(updated.icon?.color).toBeUndefined()
+    const row = db().select().from(ProjectTable).where(eq(ProjectTable.id, project.id)).get()
+    const updated = row?.data
+    expect(updated?.icon).toBeDefined()
+    expect(updated?.icon?.url).toStartWith("data:")
+    expect(updated?.icon?.url).toContain("base64")
+    expect(updated?.icon?.color).toBeUndefined()
   })
 
   test("should not discover non-image files", async () => {
@@ -114,7 +117,8 @@ describe("Project.discover", () => {
 
     await Project.discover(project)
 
-    const updated = await Storage.read<Project.Info>(["project", project.id])
-    expect(updated.icon).toBeUndefined()
+    const row = db().select().from(ProjectTable).where(eq(ProjectTable.id, project.id)).get()
+    const updated = row?.data
+    expect(updated?.icon).toBeUndefined()
   })
 })

@@ -10,7 +10,13 @@ import { Flag } from "../flag/flag"
 import { Identifier } from "../id/id"
 import { Installation } from "../installation"
 
-import { Storage } from "../storage/storage"
+import { db, NotFoundError } from "../storage/db"
+import { SessionTable } from "./session.sql"
+import { MessageTable } from "./message.sql"
+import { PartTable } from "./part.sql"
+import { SessionDiffTable } from "./session-aux.sql"
+import { ShareTable } from "../share/share.sql"
+import { eq } from "drizzle-orm"
 import { Log } from "../util/log"
 import { MessageV2 } from "./message-v2"
 import { Instance } from "../project/instance"
@@ -211,7 +217,17 @@ export namespace Session {
       },
     }
     log.info("created", result)
-    await Storage.write(["session", Instance.project.id, result.id], result)
+    db()
+      .insert(SessionTable)
+      .values({
+        id: result.id,
+        projectID: result.projectID,
+        parentID: result.parentID,
+        createdAt: result.time.created,
+        updatedAt: result.time.updated,
+        data: result,
+      })
+      .run()
     Bus.publish(Event.Created, {
       info: result,
     })
@@ -240,12 +256,14 @@ export namespace Session {
   }
 
   export const get = fn(Identifier.schema("session"), async (id) => {
-    const read = await Storage.read<Info>(["session", Instance.project.id, id])
-    return read as Info
+    const row = db().select().from(SessionTable).where(eq(SessionTable.id, id)).get()
+    if (!row) throw new NotFoundError({ message: `Session not found: ${id}` })
+    return row.data
   })
 
   export const getShare = fn(Identifier.schema("session"), async (id) => {
-    return Storage.read<ShareInfo>(["share", id])
+    const row = db().select().from(ShareTable).where(eq(ShareTable.sessionID, id)).get()
+    return row?.data
   })
 
   export const share = fn(Identifier.schema("session"), async (id) => {
@@ -280,23 +298,24 @@ export namespace Session {
     )
   })
 
-  export async function update(id: string, editor: (session: Info) => void, options?: { touch?: boolean }) {
-    const project = Instance.project
-    const result = await Storage.update<Info>(["session", project.id, id], (draft) => {
-      editor(draft)
-      if (options?.touch !== false) {
-        draft.time.updated = Date.now()
-      }
-    })
+  export function update(id: string, editor: (session: Info) => void, options?: { touch?: boolean }) {
+    const row = db().select().from(SessionTable).where(eq(SessionTable.id, id)).get()
+    if (!row) throw new Error(`Session not found: ${id}`)
+    const data = { ...row.data }
+    editor(data)
+    if (options?.touch !== false) {
+      data.time.updated = Date.now()
+    }
+    db().update(SessionTable).set({ updatedAt: data.time.updated, data }).where(eq(SessionTable.id, id)).run()
     Bus.publish(Event.Updated, {
-      info: result,
+      info: data,
     })
-    return result
+    return data
   }
 
   export const diff = fn(Identifier.schema("session"), async (sessionID) => {
-    const diffs = await Storage.read<Snapshot.FileDiff[]>(["session_diff", sessionID])
-    return diffs ?? []
+    const row = db().select().from(SessionDiffTable).where(eq(SessionDiffTable.sessionID, sessionID)).get()
+    return row?.data ?? []
   })
 
   export const messages = fn(
@@ -315,22 +334,17 @@ export namespace Session {
     },
   )
 
-  export async function* list() {
+  export function* list() {
     const project = Instance.project
-    for (const item of await Storage.list(["session", project.id])) {
-      yield Storage.read<Info>(item)
+    const rows = db().select().from(SessionTable).where(eq(SessionTable.projectID, project.id)).all()
+    for (const row of rows) {
+      yield row.data
     }
   }
 
   export const children = fn(Identifier.schema("session"), async (parentID) => {
-    const project = Instance.project
-    const result = [] as Session.Info[]
-    for (const item of await Storage.list(["session", project.id])) {
-      const session = await Storage.read<Info>(item)
-      if (session.parentID !== parentID) continue
-      result.push(session)
-    }
-    return result
+    const rows = db().select().from(SessionTable).where(eq(SessionTable.parentID, parentID)).all()
+    return rows.map((row) => row.data)
   })
 
   export const remove = fn(Identifier.schema("session"), async (sessionID) => {
@@ -341,13 +355,8 @@ export namespace Session {
         await remove(child.id)
       }
       await unshare(sessionID).catch(() => {})
-      for (const msg of await Storage.list(["message", sessionID])) {
-        for (const part of await Storage.list(["part", msg.at(-1)!])) {
-          await Storage.remove(part)
-        }
-        await Storage.remove(msg)
-      }
-      await Storage.remove(["session", project.id, sessionID])
+      // CASCADE delete handles messages and parts automatically
+      db().delete(SessionTable).where(eq(SessionTable.id, sessionID)).run()
       Bus.publish(Event.Deleted, {
         info: session,
       })
@@ -357,7 +366,17 @@ export namespace Session {
   })
 
   export const updateMessage = fn(MessageV2.Info, async (msg) => {
-    await Storage.write(["message", msg.sessionID, msg.id], msg)
+    const createdAt = msg.role === "user" ? msg.time.created : msg.time.created
+    db()
+      .insert(MessageTable)
+      .values({
+        id: msg.id,
+        sessionID: msg.sessionID,
+        createdAt,
+        data: msg,
+      })
+      .onConflictDoUpdate({ target: MessageTable.id, set: { data: msg } })
+      .run()
     Bus.publish(MessageV2.Event.Updated, {
       info: msg,
     })
@@ -370,7 +389,8 @@ export namespace Session {
       messageID: Identifier.schema("message"),
     }),
     async (input) => {
-      await Storage.remove(["message", input.sessionID, input.messageID])
+      // CASCADE delete handles parts automatically
+      db().delete(MessageTable).where(eq(MessageTable.id, input.messageID)).run()
       Bus.publish(MessageV2.Event.Removed, {
         sessionID: input.sessionID,
         messageID: input.messageID,
@@ -386,7 +406,7 @@ export namespace Session {
       partID: Identifier.schema("part"),
     }),
     async (input) => {
-      await Storage.remove(["part", input.messageID, input.partID])
+      db().delete(PartTable).where(eq(PartTable.id, input.partID)).run()
       Bus.publish(MessageV2.Event.PartRemoved, {
         sessionID: input.sessionID,
         messageID: input.messageID,
@@ -411,7 +431,16 @@ export namespace Session {
   export const updatePart = fn(UpdatePartInput, async (input) => {
     const part = "delta" in input ? input.part : input
     const delta = "delta" in input ? input.delta : undefined
-    await Storage.write(["part", part.messageID, part.id], part)
+    db()
+      .insert(PartTable)
+      .values({
+        id: part.id,
+        messageID: part.messageID,
+        sessionID: part.sessionID,
+        data: part,
+      })
+      .onConflictDoUpdate({ target: PartTable.id, set: { data: part } })
+      .run()
     Bus.publish(MessageV2.Event.PartUpdated, {
       part,
       delta,

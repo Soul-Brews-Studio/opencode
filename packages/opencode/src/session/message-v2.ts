@@ -6,7 +6,10 @@ import { Identifier } from "../id/id"
 import { LSP } from "../lsp"
 import { Snapshot } from "@/snapshot"
 import { fn } from "@/util/fn"
-import { Storage } from "@/storage/storage"
+import { db } from "@/storage/db"
+import { MessageTable } from "./message.sql"
+import { PartTable } from "./part.sql"
+import { eq, desc } from "drizzle-orm"
 import { ProviderTransform } from "@/provider/transform"
 import { STATUS_CODES } from "http"
 import { iife } from "@/util/iife"
@@ -607,21 +610,23 @@ export namespace MessageV2 {
   }
 
   export const stream = fn(Identifier.schema("session"), async function* (sessionID) {
-    const list = await Array.fromAsync(await Storage.list(["message", sessionID]))
-    for (let i = list.length - 1; i >= 0; i--) {
+    const rows = db()
+      .select()
+      .from(MessageTable)
+      .where(eq(MessageTable.sessionID, sessionID))
+      .orderBy(desc(MessageTable.createdAt))
+      .all()
+    for (const row of rows) {
       yield await get({
         sessionID,
-        messageID: list[i][2],
+        messageID: row.id,
       })
     }
   })
 
   export const parts = fn(Identifier.schema("message"), async (messageID) => {
-    const result = [] as MessageV2.Part[]
-    for (const item of await Storage.list(["part", messageID])) {
-      const read = await Storage.read<MessageV2.Part>(item)
-      result.push(read)
-    }
+    const rows = db().select().from(PartTable).where(eq(PartTable.messageID, messageID)).all()
+    const result = rows.map((row) => row.data)
     result.sort((a, b) => (a.id > b.id ? 1 : -1))
     return result
   })
@@ -632,8 +637,10 @@ export namespace MessageV2 {
       messageID: Identifier.schema("message"),
     }),
     async (input) => {
+      const row = db().select().from(MessageTable).where(eq(MessageTable.id, input.messageID)).get()
+      if (!row) throw new Error(`Message not found: ${input.messageID}`)
       return {
-        info: await Storage.read<MessageV2.Info>(["message", input.sessionID, input.messageID]),
+        info: row.data,
         parts: await parts(input.messageID),
       }
     },
