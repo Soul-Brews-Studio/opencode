@@ -9,7 +9,7 @@ import { SessionTable } from "../session/session.sql"
 import { eq } from "drizzle-orm"
 import { Log } from "../util/log"
 import { Flag } from "@/flag/flag"
-import type { Session } from "../session"
+import { Session } from "../session"
 import { work } from "../util/queue"
 import { fn } from "@opencode-ai/util/fn"
 import { BusEvent } from "@/bus/bus-event"
@@ -304,17 +304,13 @@ export namespace Project {
     log.info("migrating sessions from global", { newProjectID, worktree, count: globalSessions.length })
 
     await work(10, globalSessions, async (row) => {
-      const session = row.data as Session.Info
+      const session = Session.fromRow(row)
       if (!session) return
       if (session.directory && session.directory !== worktree) return
 
       session.projectID = newProjectID
       log.info("migrating session", { sessionID: session.id, from: "global", to: newProjectID })
-      db()
-        .update(SessionTable)
-        .set({ projectID: newProjectID, data: session })
-        .where(eq(SessionTable.id, session.id))
-        .run()
+      db().update(SessionTable).set(Session.toRow(session)).where(eq(SessionTable.id, session.id)).run()
     }).catch((error) => {
       log.error("failed to migrate sessions from global to project", { error, projectId: newProjectID })
     })

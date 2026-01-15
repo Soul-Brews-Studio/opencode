@@ -13,6 +13,7 @@ import {
   TodoTable,
   PermissionTable,
 } from "../../session/session.sql"
+import { Session } from "../../session"
 import { SessionShareTable, ShareTable } from "../../share/share.sql"
 import path from "path"
 import fs from "fs/promises"
@@ -66,7 +67,7 @@ const ExportCommand = cmd({
       for (const row of db().select().from(SessionTable).all()) {
         const dir = path.join(sessionDir, row.projectID)
         await fs.mkdir(dir, { recursive: true })
-        await Bun.write(path.join(dir, `${row.id}.json`), JSON.stringify(row.data, null, 2))
+        await Bun.write(path.join(dir, `${row.id}.json`), JSON.stringify(Session.fromRow(row), null, 2))
         stats.sessions++
       }
 

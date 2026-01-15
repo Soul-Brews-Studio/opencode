@@ -86,7 +86,7 @@ async function getCurrentProject(): Promise<Project.Info> {
 
 async function getAllSessions(): Promise<Session.Info[]> {
   const sessionRows = db().select().from(SessionTable).all()
-  return sessionRows.map((row) => row.data)
+  return sessionRows.map((row) => Session.fromRow(row))
 }
 
 export async function aggregateSessionStats(days?: number, projectFilter?: string): Promise<SessionStats> {

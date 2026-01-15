@@ -84,15 +84,11 @@ export const ImportCommand = cmd({
 
       db()
         .insert(SessionTable)
-        .values({
-          id: exportData.info.id,
-          projectID: Instance.project.id,
-          parentID: exportData.info.parentID,
-          createdAt: exportData.info.time.created,
-          updatedAt: exportData.info.time.updated,
-          data: exportData.info,
+        .values(Session.toRow({ ...exportData.info, projectID: Instance.project.id }))
+        .onConflictDoUpdate({
+          target: SessionTable.id,
+          set: Session.toRow({ ...exportData.info, projectID: Instance.project.id }),
         })
-        .onConflictDoUpdate({ target: SessionTable.id, set: { data: exportData.info } })
         .run()
 
       for (const msg of exportData.messages) {

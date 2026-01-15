@@ -239,10 +239,10 @@ describe("JSON to SQLite migration", () => {
       expect(stats?.sessions).toBe(1)
       const db = drizzle(sqlite)
       const row = db.select().from(SessionTable).where(eq(SessionTable.id, fixtures.session.id)).get()
-      expect(row?.data.id).toBe(fixtures.session.id)
+      expect(row?.id).toBe(fixtures.session.id)
       expect(row?.projectID).toBe(fixtures.project.id)
-      expect(row?.createdAt).toBe(fixtures.session.time.created)
-      expect(row?.updatedAt).toBe(fixtures.session.time.updated)
+      expect(row?.time_created).toBe(fixtures.session.time.created)
+      expect(row?.time_updated).toBe(fixtures.session.time.updated)
     })
 
     test("migrates session with parentID", async () => {
@@ -296,8 +296,8 @@ describe("JSON to SQLite migration", () => {
       expect(stats?.sessions).toBe(1)
       const db = drizzle(sqlite)
       const row = db.select().from(SessionTable).where(eq(SessionTable.id, fixtures.session.id)).get()
-      expect(row?.createdAt).toBeGreaterThanOrEqual(before)
-      expect(row?.createdAt).toBeLessThanOrEqual(after)
+      expect(row?.time_created).toBeGreaterThanOrEqual(before)
+      expect(row?.time_created).toBeLessThanOrEqual(after)
     })
 
     test("skips session with missing required fields", async () => {

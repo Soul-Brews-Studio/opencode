@@ -42,6 +42,75 @@ export namespace Session {
     ).test(title)
   }
 
+  type SessionRow = typeof SessionTable.$inferSelect
+
+  export function fromRow(row: SessionRow): Info {
+    const summary =
+      row.summary_additions !== null || row.summary_deletions !== null || row.summary_files !== null
+        ? {
+            additions: row.summary_additions ?? 0,
+            deletions: row.summary_deletions ?? 0,
+            files: row.summary_files ?? 0,
+            diffs: row.summary_diffs ?? undefined,
+          }
+        : undefined
+    const share = row.share_url ? { url: row.share_url } : undefined
+    const revert =
+      row.revert_messageID !== null
+        ? {
+            messageID: row.revert_messageID,
+            partID: row.revert_partID ?? undefined,
+            snapshot: row.revert_snapshot ?? undefined,
+            diff: row.revert_diff ?? undefined,
+          }
+        : undefined
+    return {
+      id: row.id,
+      slug: row.slug,
+      projectID: row.projectID,
+      directory: row.directory,
+      parentID: row.parentID ?? undefined,
+      title: row.title,
+      version: row.version,
+      summary,
+      share,
+      revert,
+      permission: row.permission ?? undefined,
+      time: {
+        created: row.time_created,
+        updated: row.time_updated,
+        compacting: row.time_compacting ?? undefined,
+        archived: row.time_archived ?? undefined,
+      },
+    }
+  }
+
+  export function toRow(info: Info) {
+    return {
+      id: info.id,
+      projectID: info.projectID,
+      parentID: info.parentID,
+      slug: info.slug,
+      directory: info.directory,
+      title: info.title,
+      version: info.version,
+      share_url: info.share?.url,
+      summary_additions: info.summary?.additions,
+      summary_deletions: info.summary?.deletions,
+      summary_files: info.summary?.files,
+      summary_diffs: info.summary?.diffs,
+      revert_messageID: info.revert?.messageID,
+      revert_partID: info.revert?.partID,
+      revert_snapshot: info.revert?.snapshot,
+      revert_diff: info.revert?.diff,
+      permission: info.permission,
+      time_created: info.time.created,
+      time_updated: info.time.updated,
+      time_compacting: info.time.compacting,
+      time_archived: info.time.archived,
+    }
+  }
+
   export const Info = z
     .object({
       id: Identifier.schema("session"),
@@ -214,17 +283,7 @@ export namespace Session {
       },
     }
     log.info("created", result)
-    db()
-      .insert(SessionTable)
-      .values({
-        id: result.id,
-        projectID: result.projectID,
-        parentID: result.parentID,
-        createdAt: result.time.created,
-        updatedAt: result.time.updated,
-        data: result,
-      })
-      .run()
+    db().insert(SessionTable).values(toRow(result)).run()
     Bus.publish(Event.Created, {
       info: result,
     })
@@ -255,7 +314,7 @@ export namespace Session {
   export const get = fn(Identifier.schema("session"), async (id) => {
     const row = db().select().from(SessionTable).where(eq(SessionTable.id, id)).get()
     if (!row) throw new NotFoundError({ message: `Session not found: ${id}` })
-    return row.data
+    return fromRow(row)
   })
 
   export const getShare = fn(Identifier.schema("session"), async (id) => {
@@ -298,12 +357,12 @@ export namespace Session {
   export function update(id: string, editor: (session: Info) => void, options?: { touch?: boolean }) {
     const row = db().select().from(SessionTable).where(eq(SessionTable.id, id)).get()
     if (!row) throw new Error(`Session not found: ${id}`)
-    const data = { ...row.data }
+    const data = fromRow(row)
     editor(data)
     if (options?.touch !== false) {
       data.time.updated = Date.now()
     }
-    db().update(SessionTable).set({ updatedAt: data.time.updated, data }).where(eq(SessionTable.id, id)).run()
+    db().update(SessionTable).set(toRow(data)).where(eq(SessionTable.id, id)).run()
     Bus.publish(Event.Updated, {
       info: data,
     })
@@ -335,13 +394,13 @@ export namespace Session {
     const project = Instance.project
     const rows = db().select().from(SessionTable).where(eq(SessionTable.projectID, project.id)).all()
     for (const row of rows) {
-      yield row.data
+      yield fromRow(row)
     }
   }
 
   export const children = fn(Identifier.schema("session"), async (parentID) => {
     const rows = db().select().from(SessionTable).where(eq(SessionTable.parentID, parentID)).all()
-    return rows.map((row) => row.data)
+    return rows.map((row) => fromRow(row))
   })
 
   export const remove = fn(Identifier.schema("session"), async (sessionID) => {
