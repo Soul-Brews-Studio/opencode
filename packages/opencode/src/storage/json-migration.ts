@@ -145,7 +145,6 @@ export async function migrateFromJson(sqlite: Database, customStorageDir?: strin
         .values({
           id: data.id,
           sessionID: data.sessionID,
-          createdAt: data.time?.created ?? Date.now(),
           data,
         })
         .onConflictDoNothing()

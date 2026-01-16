@@ -85,32 +85,6 @@ export namespace Session {
     }
   }
 
-  export function toRow(info: Info) {
-    return {
-      id: info.id,
-      projectID: info.projectID,
-      parentID: info.parentID,
-      slug: info.slug,
-      directory: info.directory,
-      title: info.title,
-      version: info.version,
-      share_url: info.share?.url,
-      summary_additions: info.summary?.additions,
-      summary_deletions: info.summary?.deletions,
-      summary_files: info.summary?.files,
-      summary_diffs: info.summary?.diffs,
-      revert_messageID: info.revert?.messageID,
-      revert_partID: info.revert?.partID,
-      revert_snapshot: info.revert?.snapshot,
-      revert_diff: info.revert?.diff,
-      permission: info.permission,
-      time_created: info.time.created,
-      time_updated: info.time.updated,
-      time_compacting: info.time.compacting,
-      time_archived: info.time.archived,
-    }
-  }
-
   export const Info = z
     .object({
       id: Identifier.schema("session"),
@@ -256,9 +230,10 @@ export namespace Session {
   )
 
   export const touch = fn(Identifier.schema("session"), async (sessionID) => {
-    await update(sessionID, (draft) => {
-      draft.time.updated = Date.now()
-    })
+    const now = Date.now()
+    db().update(SessionTable).set({ time_updated: now }).where(eq(SessionTable.id, sessionID)).run()
+    const session = await get(sessionID)
+    Bus.publish(Event.Updated, { info: session })
   })
 
   export async function createNext(input: {
@@ -283,21 +258,29 @@ export namespace Session {
       },
     }
     log.info("created", result)
-    db().insert(SessionTable).values(toRow(result)).run()
+    db()
+      .insert(SessionTable)
+      .values({
+        id: result.id,
+        projectID: result.projectID,
+        parentID: result.parentID,
+        slug: result.slug,
+        directory: result.directory,
+        title: result.title,
+        version: result.version,
+        permission: result.permission,
+        time_created: result.time.created,
+        time_updated: result.time.updated,
+      })
+      .run()
     Bus.publish(Event.Created, {
       info: result,
     })
     const cfg = await Config.get()
     if (!result.parentID && (Flag.OPENCODE_AUTO_SHARE || cfg.share === "auto"))
-      share(result.id)
-        .then((share) => {
-          update(result.id, (draft) => {
-            draft.share = share
-          })
-        })
-        .catch(() => {
-          // Silently ignore sharing errors during session creation
-        })
+      share(result.id).catch(() => {
+        // Silently ignore sharing errors during session creation
+      })
     Bus.publish(Event.Updated, {
       info: result,
     })
@@ -404,7 +387,6 @@ export namespace Session {
   })
 
   export const remove = fn(Identifier.schema("session"), async (sessionID) => {
-    const project = Instance.project
     try {
       const session = await get(sessionID)
       for (const child of await children(sessionID)) {
@@ -422,13 +404,11 @@ export namespace Session {
   })
 
   export const updateMessage = fn(MessageV2.Info, async (msg) => {
-    const createdAt = msg.role === "user" ? msg.time.created : msg.time.created
     db()
       .insert(MessageTable)
       .values({
         id: msg.id,
         sessionID: msg.sessionID,
-        createdAt,
         data: msg,
       })
       .onConflictDoUpdate({ target: MessageTable.id, set: { data: msg } })

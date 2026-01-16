@@ -6,7 +6,7 @@ import { Session } from "."
 import { Log } from "../util/log"
 import { splitWhen } from "remeda"
 import { db } from "../storage/db"
-import { MessageTable, PartTable } from "./session.sql"
+import { MessageTable, PartTable, SessionTable, SessionDiffTable } from "./session.sql"
 import { eq } from "drizzle-orm"
 import { Bus } from "../bus"
 import { SessionPrompt } from "./prompt"
@@ -56,13 +56,17 @@ export namespace SessionRevert {
     }
 
     if (revert) {
-      const session = await Session.get(input.sessionID)
-      revert.snapshot = session.revert?.snapshot ?? (await Snapshot.track())
+      const current = await Session.get(input.sessionID)
+      revert.snapshot = current.revert?.snapshot ?? (await Snapshot.track())
       await Snapshot.revert(patches)
       if (revert.snapshot) revert.diff = await Snapshot.diff(revert.snapshot)
       const rangeMessages = all.filter((msg) => msg.info.id >= revert!.messageID)
       const diffs = await SessionSummary.computeDiff({ messages: rangeMessages })
-      await Storage.write(["session_diff", input.sessionID], diffs)
+      db()
+        .insert(SessionDiffTable)
+        .values({ sessionID: input.sessionID, data: diffs })
+        .onConflictDoUpdate({ target: SessionDiffTable.sessionID, set: { data: diffs } })
+        .run()
       Bus.publish(Session.Event.Diff, {
         sessionID: input.sessionID,
         diff: diffs,
@@ -85,10 +89,21 @@ export namespace SessionRevert {
     const session = await Session.get(input.sessionID)
     if (!session.revert) return session
     if (session.revert.snapshot) await Snapshot.restore(session.revert.snapshot)
-    const next = await Session.update(input.sessionID, (draft) => {
-      draft.revert = undefined
-    })
-    return next
+    const now = Date.now()
+    db()
+      .update(SessionTable)
+      .set({
+        revert_messageID: null,
+        revert_partID: null,
+        revert_snapshot: null,
+        revert_diff: null,
+        time_updated: now,
+      })
+      .where(eq(SessionTable.id, input.sessionID))
+      .run()
+    const updated = await Session.get(input.sessionID)
+    Bus.publish(Session.Event.Updated, { info: updated })
+    return updated
   }
 
   export async function cleanup(session: Session.Info) {
@@ -116,8 +131,19 @@ export namespace SessionRevert {
         })
       }
     }
-    await Session.update(sessionID, (draft) => {
-      draft.revert = undefined
-    })
+    const now = Date.now()
+    db()
+      .update(SessionTable)
+      .set({
+        revert_messageID: null,
+        revert_partID: null,
+        revert_snapshot: null,
+        revert_diff: null,
+        time_updated: now,
+      })
+      .where(eq(SessionTable.id, sessionID))
+      .run()
+    const updated = await Session.get(sessionID)
+    Bus.publish(Session.Event.Updated, { info: updated })
   }
 }

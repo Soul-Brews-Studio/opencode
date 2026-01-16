@@ -166,10 +166,13 @@ export namespace SessionPrompt {
       })
     }
     if (permissions.length > 0) {
-      session.permission = permissions
-      await Session.update(session.id, (draft) => {
-        draft.permission = permissions
-      })
+      Session.update(
+        session.id,
+        (draft) => {
+          draft.permission = permissions
+        },
+        { touch: false },
+      )
     }
 
     if (input.noReply === true) {

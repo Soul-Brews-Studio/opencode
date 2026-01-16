@@ -14,7 +14,6 @@ CREATE TABLE `project` (
 CREATE TABLE `message` (
 	`id` text PRIMARY KEY NOT NULL,
 	`session_id` text NOT NULL,
-	`created_at` integer NOT NULL,
 	`data` text NOT NULL,
 	FOREIGN KEY (`session_id`) REFERENCES `session`(`id`) ON UPDATE no action ON DELETE cascade
 );
@@ -46,9 +45,24 @@ CREATE TABLE `session` (
 	`id` text PRIMARY KEY NOT NULL,
 	`project_id` text NOT NULL,
 	`parent_id` text,
-	`created_at` integer NOT NULL,
-	`updated_at` integer NOT NULL,
-	`data` text NOT NULL,
+	`slug` text NOT NULL,
+	`directory` text NOT NULL,
+	`title` text NOT NULL,
+	`version` text NOT NULL,
+	`share_url` text,
+	`summary_additions` integer,
+	`summary_deletions` integer,
+	`summary_files` integer,
+	`summary_diffs` text,
+	`revert_message_id` text,
+	`revert_part_id` text,
+	`revert_snapshot` text,
+	`revert_diff` text,
+	`permission` text,
+	`time_created` integer NOT NULL,
+	`time_updated` integer NOT NULL,
+	`time_compacting` integer,
+	`time_archived` integer,
 	FOREIGN KEY (`project_id`) REFERENCES `project`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint

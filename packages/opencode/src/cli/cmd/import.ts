@@ -82,14 +82,31 @@ export const ImportCommand = cmd({
         return
       }
 
-      db()
-        .insert(SessionTable)
-        .values(Session.toRow({ ...exportData.info, projectID: Instance.project.id }))
-        .onConflictDoUpdate({
-          target: SessionTable.id,
-          set: Session.toRow({ ...exportData.info, projectID: Instance.project.id }),
-        })
-        .run()
+      const info = exportData.info
+      const row = {
+        id: info.id,
+        projectID: Instance.project.id,
+        parentID: info.parentID,
+        slug: info.slug,
+        directory: info.directory,
+        title: info.title,
+        version: info.version,
+        share_url: info.share?.url,
+        summary_additions: info.summary?.additions,
+        summary_deletions: info.summary?.deletions,
+        summary_files: info.summary?.files,
+        summary_diffs: info.summary?.diffs,
+        revert_messageID: info.revert?.messageID,
+        revert_partID: info.revert?.partID,
+        revert_snapshot: info.revert?.snapshot,
+        revert_diff: info.revert?.diff,
+        permission: info.permission,
+        time_created: info.time.created,
+        time_updated: info.time.updated,
+        time_compacting: info.time.compacting,
+        time_archived: info.time.archived,
+      }
+      db().insert(SessionTable).values(row).onConflictDoUpdate({ target: SessionTable.id, set: row }).run()
 
       for (const msg of exportData.messages) {
         db()
@@ -97,7 +114,6 @@ export const ImportCommand = cmd({
           .values({
             id: msg.info.id,
             sessionID: exportData.info.id,
-            createdAt: msg.info.time?.created ?? Date.now(),
             data: msg.info,
           })
           .onConflictDoUpdate({ target: MessageTable.id, set: { data: msg.info } })
