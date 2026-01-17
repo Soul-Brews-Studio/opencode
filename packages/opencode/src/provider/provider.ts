@@ -1006,6 +1006,26 @@ export namespace Provider {
         })
       }
 
+      // Wrap fetch for @ai-sdk/openai to strip "id" from reasoning blocks
+      // Strip openai itemId metadata following what codex does
+      if (model.api.npm === "@ai-sdk/openai") {
+        const wrappedFetch = options["fetch"]
+        options["fetch"] = async (url: any, init?: BunFetchRequestInit) => {
+          if (init?.body && init.method === "POST") {
+            const body = JSON.parse(init.body as string)
+            if (Array.isArray(body.input)) {
+              for (const item of body.input) {
+                if (item.type === "reasoning" && "id" in item) {
+                  delete item.id
+                }
+              }
+            }
+            init = { ...init, body: JSON.stringify(body) }
+          }
+          return wrappedFetch(url, init)
+        }
+      }
+
       // Special case: google-vertex-anthropic uses a subpath import
       const bundledKey =
         model.providerID === "google-vertex-anthropic" ? "@ai-sdk/google-vertex/anthropic" : model.api.npm
