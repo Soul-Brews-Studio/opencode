@@ -4,12 +4,11 @@ import { Log } from "../util/log"
 export namespace Scheduler {
   const log = Log.create({ service: "scheduler" })
 
-  export type Scope = "instance" | "global"
   export type Task = {
     id: string
     interval: number
     run: () => Promise<void>
-    scope?: Scope
+    scope?: "instance" | "global"
   }
 
   type Timer = ReturnType<typeof setInterval>
