@@ -140,7 +140,9 @@ export namespace Provider {
         options: {},
       }
     },
+    // TODO: handle the openai and anthropic deployments
     azure: async () => {
+      const resourceName = Env.get("AZURE_RESOURCE_NAME")
       return {
         autoload: false,
         async getModel(sdk: any, model: Model, options?: Record<string, any>) {
@@ -152,7 +154,9 @@ export namespace Provider {
           }
           return sdk.responses(model.api.id)
         },
-        options: {},
+        options: {
+          baseURL: resourceName ? `https://${resourceName}.cognitiveservices.azure.com/anthropic/v1` : undefined,
+        },
       }
     },
     "azure-cognitive-services": async () => {
