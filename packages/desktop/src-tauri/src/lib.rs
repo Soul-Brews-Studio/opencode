@@ -156,6 +156,7 @@ fn spawn_sidecar(app: &AppHandle, port: u32, password: &str) -> CommandChild {
     println!("spawning sidecar on port {port}");
 
     let (mut rx, child) = cli::create_command(app, format!("serve --port {port}").as_str())
+        .env("OPENCODE_SERVER_USERNAME", "opencode")
         .env("OPENCODE_SERVER_PASSWORD", password)
         .spawn()
         .expect("Failed to spawn opencode");
@@ -199,11 +200,22 @@ fn spawn_sidecar(app: &AppHandle, port: u32, password: &str) -> CommandChild {
 
 async fn check_server_health(url: &str, password: Option<&str>) -> bool {
     let health_url = format!("{}/global/health", url.trim_end_matches('/'));
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(3))
-        .build();
 
-    let Ok(client) = client else {
+    // Some environments set proxy variables (HTTP_PROXY/HTTPS_PROXY/ALL_PROXY) without
+    // excluding loopback. reqwest respects these by default, which can prevent the desktop
+    // app from reaching its own local sidecar server.
+    let no_proxy = reqwest::Url::parse(&health_url).ok().is_some_and(|u| {
+        u.host_str().is_some_and(|host| {
+            host.eq_ignore_ascii_case("localhost")
+                || host
+                    .parse::<std::net::IpAddr>()
+                    .is_ok_and(|ip| ip.is_loopback())
+        })
+    });
+
+    let builder = reqwest::Client::builder().timeout(Duration::from_secs(3));
+    let builder = if no_proxy { builder.no_proxy() } else { builder };
+    let Ok(client) = builder.build() else {
         return false;
     };
 
