@@ -26,5 +26,7 @@
     <true/>
     <key>com.apple.security.personal-information.photos-library</key>
     <true/>
+    <key>com.apple.developer.usernotifications.communication</key>
+    <true/>
 </dict>
 </plist>

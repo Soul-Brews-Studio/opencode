@@ -1,6 +1,7 @@
 mod cli;
 #[cfg(windows)]
 mod job_object;
+pub mod notification_macos;
 mod window_customizer;
 
 use cli::{install_cli, sync_cli};
@@ -22,6 +23,7 @@ use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_store::StoreExt;
 use tokio::sync::oneshot;
 
+use crate::notification_macos::send_communication_notification;
 use crate::window_customizer::PinchZoomDisablePlugin;
 
 const SETTINGS_STORE: &str = "opencode.settings.dat";
@@ -135,6 +137,31 @@ async fn set_default_server_url(app: AppHandle, url: Option<String>) -> Result<(
         .map_err(|e| format!("Failed to save settings: {}", e))?;
 
     Ok(())
+}
+
+#[tauri::command]
+fn send_rich_notification(
+    title: String,
+    body: String,
+    sender_name: String,
+    sender_image_base64: Option<String>,
+    conversation_id: String,
+) -> Result<bool, String> {
+    use base64::Engine;
+
+    let image_data = sender_image_base64
+        .as_ref()
+        .and_then(|b64| base64::engine::general_purpose::STANDARD.decode(b64).ok());
+
+    let success = notification_macos::send_communication_notification(
+        &title,
+        &body,
+        &sender_name,
+        image_data.as_deref(),
+        &conversation_id,
+    );
+
+    Ok(success)
 }
 
 fn get_sidecar_port() -> u32 {
@@ -283,7 +310,8 @@ pub fn run() {
             install_cli,
             ensure_server_ready,
             get_default_server_url,
-            set_default_server_url
+            set_default_server_url,
+            send_rich_notification
         ])
         .setup(move |app| {
             let app = app.handle().clone();
@@ -367,6 +395,15 @@ pub fn run() {
                     };
 
                     let _ = tx.send(res);
+                });
+            }
+
+            {
+                tauri::async_runtime::spawn(async move {
+                    loop {
+                        send_communication_notification("test", "test", "test", None, "test");
+                        tokio::time::sleep(Duration::from_secs(1)).await;
+                    }
                 });
             }
 

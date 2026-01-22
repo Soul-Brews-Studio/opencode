@@ -4,6 +4,7 @@ version = "0.0.0"
 description = "The open source AI coding agent"
 authors = ["Anomaly Innovations"]
 edition = "2024"
+default-run = "opencode-desktop"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -42,10 +43,38 @@ reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"
 uuid = { version = "1.19.0", features = ["v4"] }
 tauri-plugin-decorum = "1.1.1"
 
-
 [target.'cfg(target_os = "linux")'.dependencies]
 gtk = "0.18.2"
 webkit2gtk = "=2.0.1"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", features = [
+    "NSData",
+    "NSString",
+    "NSPersonNameComponents",
+    "NSArray",
+] }
+objc2-intents = { version = "0.3", features = [
+    "INIntent",
+    "INSendMessageIntent",
+    "INPerson",
+    "INPersonHandle",
+    "INImage",
+    "INSpeakableString",
+    "INOutgoingMessageType",
+    "INInteraction",
+    "block2",
+] }
+objc2-user-notifications = { version = "0.3", features = [
+    "UNNotificationContent",
+    "UNNotificationRequest",
+    "UNUserNotificationCenter",
+    "UNNotificationTrigger",
+    "block2",
+] }
+base64 = "0.22"
+block2 = "0.6.2"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.61", features = [

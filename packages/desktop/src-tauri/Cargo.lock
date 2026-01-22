@@ -2717,6 +2717,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "objc2-contacts"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b034b578389f89a85c055eacc8d8b368be5f04a6c1b07f672bf3aec21d0ef621"
+dependencies = [
+ "objc2 0.6.3",
+ "objc2-foundation 0.3.2",
+]
+
+[[package]]
 name = "objc2-core-data"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2837,6 +2847,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "objc2-intents"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80fac082e6de12282b24ea745e9707cd374363c7ae0b2f813bf1813cfc289325"
+dependencies = [
+ "bitflags 2.10.0",
+ "block2 0.6.2",
+ "objc2 0.6.3",
+ "objc2-contacts",
+ "objc2-core-graphics",
+ "objc2-core-location",
+ "objc2-foundation 0.3.2",
+]
+
+[[package]]
 name = "objc2-io-surface"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2944,7 +2969,10 @@ version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9df9128cbbfef73cda168416ccf7f837b62737d748333bfe9ab71c245d76613e"
 dependencies = [
+ "bitflags 2.10.0",
+ "block2 0.6.2",
  "objc2 0.6.3",
+ "objc2-core-location",
  "objc2-foundation 0.3.2",
 ]
 
@@ -2986,9 +3014,15 @@ dependencies = [
 name = "opencode-desktop"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
+ "block2 0.6.2",
  "futures",
  "gtk",
  "listeners",
+ "objc2 0.6.3",
+ "objc2-foundation 0.3.2",
+ "objc2-intents",
+ "objc2-user-notifications",
  "reqwest",
  "semver",
  "serde",
