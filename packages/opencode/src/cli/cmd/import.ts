@@ -2,7 +2,7 @@ import type { Argv } from "yargs"
 import { Session } from "../../session"
 import { cmd } from "./cmd"
 import { bootstrap } from "../bootstrap"
-import { db } from "../../storage/db"
+import { Database } from "../../storage/db"
 import { SessionTable, MessageTable, PartTable } from "../../session/session.sql"
 import { Instance } from "../../project/instance"
 import { EOL } from "os"
@@ -82,31 +82,35 @@ export const ImportCommand = cmd({
         return
       }
 
-      db().insert(SessionTable).values(Session.toRow(exportData.info)).onConflictDoNothing().run()
+      Database.use((db) => db.insert(SessionTable).values(Session.toRow(exportData.info)).onConflictDoNothing().run())
 
       for (const msg of exportData.messages) {
-        db()
-          .insert(MessageTable)
-          .values({
-            id: msg.info.id,
-            sessionID: exportData.info.id,
-            createdAt: msg.info.time?.created ?? Date.now(),
-            data: msg.info,
-          })
-          .onConflictDoNothing()
-          .run()
-
-        for (const part of msg.parts) {
-          db()
-            .insert(PartTable)
+        Database.use((db) =>
+          db
+            .insert(MessageTable)
             .values({
-              id: part.id,
-              messageID: msg.info.id,
+              id: msg.info.id,
               sessionID: exportData.info.id,
-              data: part,
+              createdAt: msg.info.time?.created ?? Date.now(),
+              data: msg.info,
             })
             .onConflictDoNothing()
-            .run()
+            .run(),
+        )
+
+        for (const part of msg.parts) {
+          Database.use((db) =>
+            db
+              .insert(PartTable)
+              .values({
+                id: part.id,
+                messageID: msg.info.id,
+                sessionID: exportData.info.id,
+                data: part,
+              })
+              .onConflictDoNothing()
+              .run(),
+          )
         }
       }
 

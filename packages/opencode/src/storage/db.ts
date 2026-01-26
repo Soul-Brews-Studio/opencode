@@ -1,5 +1,9 @@
-import { Database } from "bun:sqlite"
-import { drizzle } from "drizzle-orm/bun-sqlite"
+import { Database as BunDatabase } from "bun:sqlite"
+import { drizzle, type BunSQLiteDatabase } from "drizzle-orm/bun-sqlite"
+import type { SQLiteTransaction } from "drizzle-orm/sqlite-core"
+import type { ExtractTablesWithRelations } from "drizzle-orm"
+export * from "drizzle-orm"
+import { Context } from "../util/context"
 import { lazy } from "../util/lazy"
 import { Global } from "../global"
 import { Log } from "../util/log"
@@ -18,29 +22,85 @@ export const NotFoundError = NamedError.create(
 
 const log = Log.create({ service: "db" })
 
-export type DB = ReturnType<typeof drizzle>
+export namespace Database {
+  export type Transaction = SQLiteTransaction<
+    "sync",
+    void,
+    Record<string, never>,
+    ExtractTablesWithRelations<Record<string, never>>
+  >
 
-const connection = lazy(() => {
-  const dbPath = path.join(Global.Path.data, "opencode.db")
-  log.info("opening database", { path: dbPath })
+  type Client = BunSQLiteDatabase<Record<string, never>>
 
-  const sqlite = new Database(dbPath, { create: true })
+  const client = lazy(() => {
+    const dbPath = path.join(Global.Path.data, "opencode.db")
+    log.info("opening database", { path: dbPath })
 
-  sqlite.run("PRAGMA journal_mode = WAL")
-  sqlite.run("PRAGMA synchronous = NORMAL")
-  sqlite.run("PRAGMA busy_timeout = 5000")
-  sqlite.run("PRAGMA cache_size = -64000")
-  sqlite.run("PRAGMA foreign_keys = ON")
+    const sqlite = new BunDatabase(dbPath, { create: true })
 
-  migrate(sqlite)
+    sqlite.run("PRAGMA journal_mode = WAL")
+    sqlite.run("PRAGMA synchronous = NORMAL")
+    sqlite.run("PRAGMA busy_timeout = 5000")
+    sqlite.run("PRAGMA cache_size = -64000")
+    sqlite.run("PRAGMA foreign_keys = ON")
 
-  // Run JSON migration asynchronously after schema is ready
-  migrateFromJson(sqlite).catch((e) => log.error("json migration failed", { error: e }))
+    migrate(sqlite)
 
-  return drizzle(sqlite)
-})
+    migrateFromJson(sqlite).catch((e) => log.error("json migration failed", { error: e }))
 
-function migrate(sqlite: Database) {
+    return drizzle(sqlite)
+  })
+
+  export type TxOrDb = Transaction | Client
+
+  const TransactionContext = Context.create<{
+    tx: TxOrDb
+    effects: (() => void | Promise<void>)[]
+  }>("database")
+
+  export function use<T>(callback: (trx: TxOrDb) => T): T {
+    try {
+      const { tx } = TransactionContext.use()
+      return callback(tx)
+    } catch (err) {
+      if (err instanceof Context.NotFound) {
+        const effects: (() => void | Promise<void>)[] = []
+        const result = TransactionContext.provide({ effects, tx: client() }, () => callback(client()))
+        for (const effect of effects) effect()
+        return result
+      }
+      throw err
+    }
+  }
+
+  export function effect(effect: () => void | Promise<void>) {
+    try {
+      const { effects } = TransactionContext.use()
+      effects.push(effect)
+    } catch {
+      effect()
+    }
+  }
+
+  export function transaction<T>(callback: (tx: TxOrDb) => T): T {
+    try {
+      const { tx } = TransactionContext.use()
+      return callback(tx)
+    } catch (err) {
+      if (err instanceof Context.NotFound) {
+        const effects: (() => void | Promise<void>)[] = []
+        const result = client().transaction((tx) => {
+          return TransactionContext.provide({ tx, effects }, () => callback(tx))
+        })
+        for (const effect of effects) effect()
+        return result
+      }
+      throw err
+    }
+  }
+}
+
+function migrate(sqlite: BunDatabase) {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS _migrations (
       name TEXT PRIMARY KEY,
@@ -59,8 +119,6 @@ function migrate(sqlite: Database) {
     if (applied.has(migration.name)) continue
     log.info("applying migration", { name: migration.name })
 
-    // Split by statement breakpoint and execute each statement
-    // Use IF NOT EXISTS variants to handle partial migrations
     const statements = migration.sql.split("--> statement-breakpoint")
     for (const stmt of statements) {
       const trimmed = stmt.trim()
@@ -69,7 +127,6 @@ function migrate(sqlite: Database) {
       try {
         sqlite.exec(trimmed)
       } catch (e: any) {
-        // Ignore "already exists" errors for idempotency
         if (e?.message?.includes("already exists")) {
           log.info("skipping existing object", { statement: trimmed.slice(0, 50) })
           continue
@@ -80,8 +137,4 @@ function migrate(sqlite: Database) {
 
     sqlite.run("INSERT INTO _migrations (name, applied_at) VALUES (?, ?)", [migration.name, Date.now()])
   }
-}
-
-export function db() {
-  return connection()
 }

@@ -6,9 +6,8 @@ import { Identifier } from "../id/id"
 import { LSP } from "../lsp"
 import { Snapshot } from "@/snapshot"
 import { fn } from "@/util/fn"
-import { db } from "@/storage/db"
+import { Database, eq, desc } from "@/storage/db"
 import { MessageTable, PartTable } from "./session.sql"
-import { eq, desc } from "drizzle-orm"
 import { ProviderTransform } from "@/provider/transform"
 import { STATUS_CODES } from "http"
 import { iife } from "@/util/iife"
@@ -609,12 +608,14 @@ export namespace MessageV2 {
   }
 
   export const stream = fn(Identifier.schema("session"), async function* (sessionID) {
-    const rows = db()
-      .select()
-      .from(MessageTable)
-      .where(eq(MessageTable.sessionID, sessionID))
-      .orderBy(desc(MessageTable.createdAt))
-      .all()
+    const rows = Database.use((db) =>
+      db
+        .select()
+        .from(MessageTable)
+        .where(eq(MessageTable.sessionID, sessionID))
+        .orderBy(desc(MessageTable.createdAt))
+        .all(),
+    )
     for (const row of rows) {
       yield {
         info: row.data,
@@ -624,7 +625,7 @@ export namespace MessageV2 {
   })
 
   export const parts = fn(Identifier.schema("message"), async (messageID) => {
-    const rows = db().select().from(PartTable).where(eq(PartTable.messageID, messageID)).all()
+    const rows = Database.use((db) => db.select().from(PartTable).where(eq(PartTable.messageID, messageID)).all())
     const result = rows.map((row) => row.data)
     result.sort((a, b) => (a.id > b.id ? 1 : -1))
     return result
@@ -636,7 +637,7 @@ export namespace MessageV2 {
       messageID: Identifier.schema("message"),
     }),
     async (input) => {
-      const row = db().select().from(MessageTable).where(eq(MessageTable.id, input.messageID)).get()
+      const row = Database.use((db) => db.select().from(MessageTable).where(eq(MessageTable.id, input.messageID)).get())
       if (!row) throw new Error(`Message not found: ${input.messageID}`)
       return {
         info: row.data,

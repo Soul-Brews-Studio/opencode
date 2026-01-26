@@ -1,9 +1,8 @@
 import { BusEvent } from "@/bus/bus-event"
 import { Bus } from "@/bus"
 import z from "zod"
-import { db } from "../storage/db"
+import { Database, eq } from "../storage/db"
 import { TodoTable } from "./session.sql"
-import { eq } from "drizzle-orm"
 
 export namespace Todo {
   export const Info = z
@@ -27,16 +26,18 @@ export namespace Todo {
   }
 
   export function update(input: { sessionID: string; todos: Info[] }) {
-    db()
-      .insert(TodoTable)
-      .values({ sessionID: input.sessionID, data: input.todos })
-      .onConflictDoUpdate({ target: TodoTable.sessionID, set: { data: input.todos } })
-      .run()
+    Database.use((db) =>
+      db
+        .insert(TodoTable)
+        .values({ sessionID: input.sessionID, data: input.todos })
+        .onConflictDoUpdate({ target: TodoTable.sessionID, set: { data: input.todos } })
+        .run(),
+    )
     Bus.publish(Event.Updated, input)
   }
 
   export function get(sessionID: string) {
-    const row = db().select().from(TodoTable).where(eq(TodoTable.sessionID, sessionID)).get()
+    const row = Database.use((db) => db.select().from(TodoTable).where(eq(TodoTable.sessionID, sessionID)).get())
     return row?.data ?? []
   }
 }

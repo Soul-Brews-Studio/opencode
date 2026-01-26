@@ -11,9 +11,8 @@ import { Snapshot } from "@/snapshot"
 import { Log } from "@/util/log"
 import path from "path"
 import { Instance } from "@/project/instance"
-import { db } from "@/storage/db"
+import { Database, eq } from "@/storage/db"
 import { SessionDiffTable } from "./session.sql"
-import { eq } from "drizzle-orm"
 import { Bus } from "@/bus"
 
 import { LLM } from "./llm"
@@ -56,11 +55,13 @@ export namespace SessionSummary {
         files: diffs.length,
       }
     })
-    db()
-      .insert(SessionDiffTable)
-      .values({ sessionID: input.sessionID, data: diffs })
-      .onConflictDoUpdate({ target: SessionDiffTable.sessionID, set: { data: diffs } })
-      .run()
+    Database.use((db) =>
+      db
+        .insert(SessionDiffTable)
+        .values({ sessionID: input.sessionID, data: diffs })
+        .onConflictDoUpdate({ target: SessionDiffTable.sessionID, set: { data: diffs } })
+        .run(),
+    )
     Bus.publish(Session.Event.Diff, {
       sessionID: input.sessionID,
       diff: diffs,
@@ -122,7 +123,9 @@ export namespace SessionSummary {
       messageID: Identifier.schema("message").optional(),
     }),
     async (input) => {
-      const row = db().select().from(SessionDiffTable).where(eq(SessionDiffTable.sessionID, input.sessionID)).get()
+      const row = Database.use((db) =>
+        db.select().from(SessionDiffTable).where(eq(SessionDiffTable.sessionID, input.sessionID)).get(),
+      )
       return row?.data ?? []
     },
   )

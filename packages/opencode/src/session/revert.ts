@@ -5,9 +5,8 @@ import { MessageV2 } from "./message-v2"
 import { Session } from "."
 import { Log } from "../util/log"
 import { splitWhen } from "remeda"
-import { db } from "../storage/db"
+import { Database, eq } from "../storage/db"
 import { SessionDiffTable, MessageTable, PartTable } from "./session.sql"
-import { eq } from "drizzle-orm"
 import { Bus } from "../bus"
 import { SessionPrompt } from "./prompt"
 import { SessionSummary } from "./summary"
@@ -62,11 +61,13 @@ export namespace SessionRevert {
       if (revert.snapshot) revert.diff = await Snapshot.diff(revert.snapshot)
       const rangeMessages = all.filter((msg) => msg.info.id >= revert!.messageID)
       const diffs = await SessionSummary.computeDiff({ messages: rangeMessages })
-      db()
-        .insert(SessionDiffTable)
-        .values({ sessionID: input.sessionID, data: diffs })
-        .onConflictDoUpdate({ target: SessionDiffTable.sessionID, set: { data: diffs } })
-        .run()
+      Database.use((db) =>
+        db
+          .insert(SessionDiffTable)
+          .values({ sessionID: input.sessionID, data: diffs })
+          .onConflictDoUpdate({ target: SessionDiffTable.sessionID, set: { data: diffs } })
+          .run(),
+      )
       Bus.publish(Session.Event.Diff, {
         sessionID: input.sessionID,
         diff: diffs,
@@ -103,7 +104,7 @@ export namespace SessionRevert {
     const [preserve, remove] = splitWhen(msgs, (x) => x.info.id === messageID)
     msgs = preserve
     for (const msg of remove) {
-      db().delete(MessageTable).where(eq(MessageTable.id, msg.info.id)).run()
+      Database.use((db) => db.delete(MessageTable).where(eq(MessageTable.id, msg.info.id)).run())
       await Bus.publish(MessageV2.Event.Removed, { sessionID: sessionID, messageID: msg.info.id })
     }
     const last = preserve.at(-1)
@@ -112,7 +113,7 @@ export namespace SessionRevert {
       const [preserveParts, removeParts] = splitWhen(last.parts, (x) => x.id === partID)
       last.parts = preserveParts
       for (const part of removeParts) {
-        db().delete(PartTable).where(eq(PartTable.id, part.id)).run()
+        Database.use((db) => db.delete(PartTable).where(eq(PartTable.id, part.id)).run())
         await Bus.publish(MessageV2.Event.PartRemoved, {
           sessionID: sessionID,
           messageID: last.info.id,
