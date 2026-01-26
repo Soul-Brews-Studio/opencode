@@ -4,7 +4,6 @@ import { Snapshot } from "../snapshot"
 import { MessageV2 } from "./message-v2"
 import { Session } from "."
 import { Log } from "../util/log"
-import { splitWhen } from "remeda"
 import { Database, eq } from "../storage/db"
 import { SessionDiffTable, MessageTable, PartTable } from "./session.sql"
 import { Bus } from "../bus"
@@ -97,26 +96,46 @@ export namespace SessionRevert {
   export async function cleanup(session: Session.Info) {
     if (!session.revert) return
     const sessionID = session.id
-    let msgs = await Session.messages({ sessionID })
+    const msgs = await Session.messages({ sessionID })
     const messageID = session.revert.messageID
-    const [preserve, remove] = splitWhen(msgs, (x) => x.info.id === messageID)
-    msgs = preserve
+    const preserve = [] as MessageV2.WithParts[]
+    const remove = [] as MessageV2.WithParts[]
+    let target: MessageV2.WithParts | undefined
+    for (const msg of msgs) {
+      if (msg.info.id < messageID) {
+        preserve.push(msg)
+        continue
+      }
+      if (msg.info.id > messageID) {
+        remove.push(msg)
+        continue
+      }
+      if (session.revert.partID) {
+        preserve.push(msg)
+        target = msg
+        continue
+      }
+      remove.push(msg)
+    }
     for (const msg of remove) {
       Database.use((db) => db.delete(MessageTable).where(eq(MessageTable.id, msg.info.id)).run())
       await Bus.publish(MessageV2.Event.Removed, { sessionID: sessionID, messageID: msg.info.id })
     }
-    const last = preserve.at(-1)
-    if (session.revert.partID && last) {
+    if (session.revert.partID && target) {
       const partID = session.revert.partID
-      const [preserveParts, removeParts] = splitWhen(last.parts, (x) => x.id === partID)
-      last.parts = preserveParts
-      for (const part of removeParts) {
-        Database.use((db) => db.delete(PartTable).where(eq(PartTable.id, part.id)).run())
-        await Bus.publish(MessageV2.Event.PartRemoved, {
-          sessionID: sessionID,
-          messageID: last.info.id,
-          partID: part.id,
-        })
+      const removeStart = target.parts.findIndex((part) => part.id === partID)
+      if (removeStart >= 0) {
+        const preserveParts = target.parts.slice(0, removeStart)
+        const removeParts = target.parts.slice(removeStart)
+        target.parts = preserveParts
+        for (const part of removeParts) {
+          Database.use((db) => db.delete(PartTable).where(eq(PartTable.id, part.id)).run())
+          await Bus.publish(MessageV2.Event.PartRemoved, {
+            sessionID: sessionID,
+            messageID: target.info.id,
+            partID: part.id,
+          })
+        }
       }
     }
     await Session.clearRevert(sessionID)

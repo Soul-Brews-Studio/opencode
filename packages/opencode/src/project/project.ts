@@ -1,5 +1,4 @@
 import z from "zod"
-import fs from "fs/promises"
 import { Filesystem } from "../util/filesystem"
 import path from "path"
 import { $ } from "bun"
@@ -13,7 +12,6 @@ import { fn } from "@opencode-ai/util/fn"
 import { BusEvent } from "@/bus/bus-event"
 import { iife } from "@/util/iife"
 import { GlobalBus } from "@/bus/global"
-import { existsSync } from "fs"
 
 export namespace Project {
   const log = Log.create({ service: "project" })
@@ -61,7 +59,7 @@ export namespace Project {
     return {
       id: row.id,
       worktree: row.worktree,
-      vcs: row.vcs as Info["vcs"],
+      vcs: row.vcs ? Info.shape.vcs.parse(row.vcs) : undefined,
       name: row.name ?? undefined,
       icon,
       time: {
@@ -76,61 +74,58 @@ export namespace Project {
   export async function fromDirectory(directory: string) {
     log.info("fromDirectory", { directory })
 
-    const { id, sandbox, worktree, vcs } = await iife(async () => {
+    const data = await iife(async () => {
       const matches = Filesystem.up({ targets: [".git"], start: directory })
       const git = await matches.next().then((x) => x.value)
       await matches.return()
       if (git) {
-        let sandbox = path.dirname(git)
+        const sandbox = path.dirname(git)
+        const bin = Bun.which("git")
 
-        const gitBinary = Bun.which("git")
-
-        // cached id calculation
-        let id = await Bun.file(path.join(git, "opencode"))
+        const cached = await Bun.file(path.join(git, "opencode"))
           .text()
           .then((x) => x.trim())
           .catch(() => undefined)
 
-        if (!gitBinary) {
+        if (!bin) {
           return {
-            id: id ?? "global",
+            id: cached ?? "global",
             worktree: sandbox,
             sandbox: sandbox,
             vcs: Info.shape.vcs.parse(Flag.OPENCODE_FAKE_VCS),
           }
         }
 
-        // generate id from root commit
-        if (!id) {
-          const roots = await $`git rev-list --max-parents=0 --all`
-            .quiet()
-            .nothrow()
-            .cwd(sandbox)
-            .text()
-            .then((x) =>
-              x
-                .split("\n")
-                .filter(Boolean)
-                .map((x) => x.trim())
-                .toSorted(),
-            )
-            .catch(() => undefined)
-
-          if (!roots) {
-            return {
-              id: "global",
-              worktree: sandbox,
-              sandbox: sandbox,
-              vcs: Info.shape.vcs.parse(Flag.OPENCODE_FAKE_VCS),
-            }
-          }
-
-          id = roots[0]
-          if (id) {
-            void Bun.file(path.join(git, "opencode"))
-              .write(id)
+        const roots = cached
+          ? undefined
+          : await $`git rev-list --max-parents=0 --all`
+              .quiet()
+              .nothrow()
+              .cwd(sandbox)
+              .text()
+              .then((x) =>
+                x
+                  .split("\n")
+                  .filter(Boolean)
+                  .map((x) => x.trim())
+                  .toSorted(),
+              )
               .catch(() => undefined)
+
+        if (!cached && !roots) {
+          return {
+            id: "global",
+            worktree: sandbox,
+            sandbox: sandbox,
+            vcs: Info.shape.vcs.parse(Flag.OPENCODE_FAKE_VCS),
           }
+        }
+
+        const id = cached ?? roots?.[0]
+        if (!cached && id) {
+          void Bun.file(path.join(git, "opencode"))
+            .write(id)
+            .catch(() => undefined)
         }
 
         if (!id) {
@@ -159,33 +154,31 @@ export namespace Project {
           }
         }
 
-        sandbox = top
-
-        const worktree = await $`git rev-parse --git-common-dir`
+        const tree = await $`git rev-parse --git-common-dir`
           .quiet()
           .nothrow()
-          .cwd(sandbox)
+          .cwd(top)
           .text()
           .then((x) => {
             const dirname = path.dirname(x.trim())
-            if (dirname === ".") return sandbox
+            if (dirname === ".") return top
             return dirname
           })
           .catch(() => undefined)
 
-        if (!worktree) {
+        if (!tree) {
           return {
             id,
-            sandbox,
-            worktree: sandbox,
+            sandbox: top,
+            worktree: top,
             vcs: Info.shape.vcs.parse(Flag.OPENCODE_FAKE_VCS),
           }
         }
 
         return {
           id,
-          sandbox,
-          worktree,
+          sandbox: top,
+          worktree: tree,
           vcs: "git",
         }
       }
@@ -198,21 +191,21 @@ export namespace Project {
       }
     })
 
-    const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get())
+    const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, data.id)).get())
     const existing = await iife(async () => {
       if (row) return fromRow(row)
       const fresh: Info = {
-        id,
-        worktree,
-        vcs: vcs as Info["vcs"],
+        id: data.id,
+        worktree: data.worktree,
+        vcs: data.vcs as Info["vcs"],
         sandboxes: [],
         time: {
           created: Date.now(),
           updated: Date.now(),
         },
       }
-      if (id !== "global") {
-        await migrateFromGlobal(id, worktree)
+      if (data.id !== "global") {
+        await migrateFromGlobal(data.id, data.worktree)
       }
       return fresh
     })
@@ -221,19 +214,27 @@ export namespace Project {
 
     const result: Info = {
       ...existing,
-      worktree,
-      vcs: vcs as Info["vcs"],
+      worktree: data.worktree,
+      vcs: data.vcs as Info["vcs"],
       time: {
         ...existing.time,
         updated: Date.now(),
       },
     }
-    if (sandbox !== result.worktree && !result.sandboxes.includes(sandbox)) result.sandboxes.push(sandbox)
-    result.sandboxes = result.sandboxes.filter((x) => existsSync(x))
+    if (data.sandbox !== result.worktree && !result.sandboxes.includes(data.sandbox))
+      result.sandboxes.push(data.sandbox)
+    const sandboxes: string[] = []
+    for (const x of result.sandboxes) {
+      const stat = await Bun.file(x)
+        .stat()
+        .catch(() => undefined)
+      if (stat) sandboxes.push(x)
+    }
+    result.sandboxes = sandboxes
     const insert = {
       id: result.id,
       worktree: result.worktree,
-      vcs: result.vcs,
+      vcs: result.vcs ?? null,
       name: result.name,
       icon_url: result.icon?.url,
       icon_color: result.icon?.color,
@@ -244,7 +245,7 @@ export namespace Project {
     }
     const updateSet = {
       worktree: result.worktree,
-      vcs: result.vcs,
+      vcs: result.vcs ?? null,
       name: result.name,
       icon_url: result.icon?.url,
       icon_color: result.icon?.color,
@@ -261,7 +262,7 @@ export namespace Project {
         properties: result,
       },
     })
-    return { project: result, sandbox }
+    return { project: result, sandbox: data.sandbox }
   }
 
   export async function discover(input: Info) {
@@ -294,38 +295,36 @@ export namespace Project {
     return
   }
 
-  async function migrateFromGlobal(newProjectID: string, worktree: string) {
-    const globalRow = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, "global")).get())
-    if (!globalRow) return
+  async function migrateFromGlobal(id: string, worktree: string) {
+    const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, "global")).get())
+    if (!row) return
 
-    const globalSessions = Database.use((db) =>
+    const sessions = Database.use((db) =>
       db.select().from(SessionTable).where(eq(SessionTable.project_id, "global")).all(),
     )
-    if (globalSessions.length === 0) return
+    if (sessions.length === 0) return
 
-    log.info("migrating sessions from global", { newProjectID, worktree, count: globalSessions.length })
+    log.info("migrating sessions from global", { newProjectID: id, worktree, count: sessions.length })
 
-    await work(10, globalSessions, async (row) => {
+    await work(10, sessions, async (row) => {
       // Skip sessions that belong to a different directory
       if (row.directory && row.directory !== worktree) return
 
-      log.info("migrating session", { sessionID: row.id, from: "global", to: newProjectID })
-      Database.use((db) =>
-        db.update(SessionTable).set({ project_id: newProjectID }).where(eq(SessionTable.id, row.id)).run(),
-      )
+      log.info("migrating session", { sessionID: row.id, from: "global", to: id })
+      Database.use((db) => db.update(SessionTable).set({ project_id: id }).where(eq(SessionTable.id, row.id)).run())
     }).catch((error) => {
-      log.error("failed to migrate sessions from global to project", { error, projectId: newProjectID })
+      log.error("failed to migrate sessions from global to project", { error, projectId: id })
     })
   }
 
-  export function setInitialized(projectID: string) {
+  export function setInitialized(id: string) {
     Database.use((db) =>
       db
         .update(ProjectTable)
         .set({
           time_initialized: Date.now(),
         })
-        .where(eq(ProjectTable.id, projectID))
+        .where(eq(ProjectTable.id, id))
         .run(),
     )
   }
@@ -340,8 +339,8 @@ export namespace Project {
     )
   }
 
-  export function get(projectID: string): Info | undefined {
-    const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, projectID)).get())
+  export function get(id: string): Info | undefined {
+    const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get())
     if (!row) return undefined
     return fromRow(row)
   }
@@ -379,32 +378,34 @@ export namespace Project {
     },
   )
 
-  export async function sandboxes(projectID: string) {
-    const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, projectID)).get())
+  export async function sandboxes(id: string) {
+    const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get())
     if (!row) return []
     const data = fromRow(row)
     const valid: string[] = []
     for (const dir of data.sandboxes) {
-      const stat = await fs.stat(dir).catch(() => undefined)
+      const stat = await Bun.file(dir)
+        .stat()
+        .catch(() => undefined)
       if (stat?.isDirectory()) valid.push(dir)
     }
     return valid
   }
 
-  export async function addSandbox(projectID: string, directory: string) {
-    const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, projectID)).get())
-    if (!row) throw new Error(`Project not found: ${projectID}`)
+  export async function addSandbox(id: string, directory: string) {
+    const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get())
+    if (!row) throw new Error(`Project not found: ${id}`)
     const sandboxes = [...row.sandboxes]
     if (!sandboxes.includes(directory)) sandboxes.push(directory)
     const result = Database.use((db) =>
       db
         .update(ProjectTable)
         .set({ sandboxes, time_updated: Date.now() })
-        .where(eq(ProjectTable.id, projectID))
+        .where(eq(ProjectTable.id, id))
         .returning()
         .get(),
     )
-    if (!result) throw new Error(`Project not found: ${projectID}`)
+    if (!result) throw new Error(`Project not found: ${id}`)
     const data = fromRow(result)
     GlobalBus.emit("event", {
       payload: {
@@ -415,19 +416,19 @@ export namespace Project {
     return data
   }
 
-  export async function removeSandbox(projectID: string, directory: string) {
-    const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, projectID)).get())
-    if (!row) throw new Error(`Project not found: ${projectID}`)
-    const sandboxes = row.sandboxes.filter((s: string) => s !== directory)
+  export async function removeSandbox(id: string, directory: string) {
+    const row = Database.use((db) => db.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get())
+    if (!row) throw new Error(`Project not found: ${id}`)
+    const sandboxes = row.sandboxes.filter((s) => s !== directory)
     const result = Database.use((db) =>
       db
         .update(ProjectTable)
         .set({ sandboxes, time_updated: Date.now() })
-        .where(eq(ProjectTable.id, projectID))
+        .where(eq(ProjectTable.id, id))
         .returning()
         .get(),
     )
-    if (!result) throw new Error(`Project not found: ${projectID}`)
+    if (!result) throw new Error(`Project not found: ${id}`)
     const data = fromRow(result)
     GlobalBus.emit("event", {
       payload: {
