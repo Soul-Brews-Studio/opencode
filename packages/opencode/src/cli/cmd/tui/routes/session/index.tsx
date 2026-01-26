@@ -1710,8 +1710,8 @@ function Read(props: ToolProps<typeof ReadTool>) {
     if (props.part.state.status !== "completed") return []
     if (props.part.state.time.compacted) return []
     const value = props.metadata.loaded
-    if (!value) return []
-    return Array.isArray(value) ? value : [value]
+    if (!value || !Array.isArray(value)) return []
+    return value.filter((p): p is string => typeof p === "string")
   })
   return (
     <>

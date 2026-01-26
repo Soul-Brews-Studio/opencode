@@ -120,11 +120,9 @@ export namespace InstructionPrompt {
         if (part.type === "tool" && part.tool === "read" && part.state.status === "completed") {
           if (part.state.time.compacted) continue
           const loaded = part.state.metadata?.loaded
-          if (!loaded) continue
-          if (Array.isArray(loaded)) {
-            loaded.forEach((p) => paths.add(p))
-          } else {
-            paths.add(loaded)
+          if (!loaded || !Array.isArray(loaded)) continue
+          for (const p of loaded) {
+            if (typeof p === "string") paths.add(p)
           }
         }
       }
