@@ -1705,10 +1705,25 @@ function Glob(props: ToolProps<typeof GlobTool>) {
 }
 
 function Read(props: ToolProps<typeof ReadTool>) {
+  const { theme } = useTheme()
+  const loaded = createMemo(() => {
+    if (props.part.state.status !== "completed") return
+    if (props.part.state.time.compacted) return
+    return props.metadata.loaded
+  })
   return (
-    <InlineTool icon="→" pending="Reading file..." complete={props.input.filePath} part={props.part}>
-      Read {normalizePath(props.input.filePath!)} {input(props.input, ["filePath"])}
-    </InlineTool>
+    <>
+      <InlineTool icon="→" pending="Reading file..." complete={props.input.filePath} part={props.part}>
+        Read {normalizePath(props.input.filePath!)} {input(props.input, ["filePath"])}
+      </InlineTool>
+      <Show when={loaded()}>
+        <box paddingLeft={3}>
+          <text paddingLeft={3} fg={theme.textMuted}>
+            ↳ Loaded {normalizePath(loaded()!)}
+          </text>
+        </box>
+      </Show>
+    </>
   )
 }
 
